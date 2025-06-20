@@ -120,48 +120,24 @@ def parse_quiz(quiz_text):
         })
     return parsed
 
-def show_interactive_quiz(quiz_text):
+def show_quiz_with_spoilers(quiz_text):
     parsed_quiz = parse_quiz(quiz_text)
     if not parsed_quiz:
-        st.write("⚠️ Could not parse quiz format for interactive mode. Showing raw quiz text:")
+        st.write("⚠️ Could not parse quiz format. Showing raw quiz text:")
         st.markdown(quiz_text)
         return
 
-    st.write("Answer the questions and submit to check your answers:")
-
-    user_answers = {}
+    quiz_md = []
     for i, q in enumerate(parsed_quiz):
-        st.markdown(f"**Q{i+1}: {q['question']}**")
-        if q['options']:
-            key = f"q{i}"
-            user_answers[key] = st.radio("Choose your answer:", q['options'], key=key)
-        else:
-            st.error("No options found for this question, cannot display interactive quiz.")
-            return
-        st.write("")
+        quiz_md.append(f"**Q{i+1}: {q['question']}**")
+        for opt in q["options"]:
+            quiz_md.append(f"- {opt}")
+        if q["answer"]:
+            quiz_md.append(f"- **Answer:** ||{q['answer']}||")
+        quiz_md.append("")  # Blank line
 
-    if st.button("Submit Answers"):
-        score = 0
-        total = len(parsed_quiz)
-        st.markdown("---")
-        for i, q in enumerate(parsed_quiz):
-            user_key = f"q{i}"
-            user_answer = user_answers.get(user_key, "").strip()
-            correct_answer = q['answer']
+    st.markdown("\n".join(quiz_md))
 
-            st.markdown(f"**Q{i+1}: {q['question']}**")
-
-            if user_answer:
-                user_letter = user_answer[0]
-                if correct_answer and user_letter.upper() == correct_answer:
-                    st.success(f"✅ Correct! You chose {user_letter}")
-                    score += 1
-                else:
-                    st.error(f"❌ Wrong! You chose {user_letter}. Correct answer: {correct_answer}")
-            else:
-                st.warning("You did not select an answer.")
-
-        st.markdown(f"### Your Score: {score} / {total}")
 
 # --- Streamlit UI ---
 st.set_page_config(page_title="PDF Summarizer", layout="centered")
@@ -245,7 +221,8 @@ if uploaded_file:
         st.markdown("## ❓ Quick Quiz")
         with st.expander("📝 View quiz"):
             # Show interactive quiz with parsing and radio buttons
-            show_interactive_quiz(quiz)
+            show_quiz_with_spoilers(quiz)
+
 
         copy_button(quiz, label="📋 Copy Quiz")
         st.download_button("💾 Download Quiz", quiz, file_name="quiz.md")
