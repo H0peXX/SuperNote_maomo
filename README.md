@@ -10,6 +10,7 @@ streamlit run app.py
 
 cd backend
 pip install fastapi uvicorn pydantic python-multipart PyMuPDF google-generativeai
+pip install pdf2image
 uvicorn main:app --reload --port 8000
 
 
