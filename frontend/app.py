@@ -5,10 +5,13 @@ import os
 import uuid
 import streamlit.components.v1 as components
 import re
+import requests
+
 
 # --- Configure Gemini API ---
 genai.configure(api_key=os.getenv("GEMINI_API_KEY") or "AIzaSyCSDNEOTdNWtJoik1DnP68tXAWzFTCFk2c")
 g_model = genai.GenerativeModel("gemini-1.5-flash")
+
 
 # --- Functions ---
 def extract_text_from_pdf(file_bytes):
@@ -170,6 +173,13 @@ st.title("📄 PDF Formatter + Summarizer with Gemini")
 # Upload PDF
 uploaded_file = st.file_uploader("📤 Upload a PDF file", type=["pdf"])
 
+if uploaded_file:
+    file_bytes = uploaded_file.read()
+    
+    if not file_bytes:
+        st.error("❌ Uploaded file is empty. Please upload a valid PDF.")
+        st.stop()  # ❗ หยุดการประมวลผลทันที
+
 # Language selector
 st.markdown("### 🌐 Output Language")
 language_choice = st.selectbox("Choose a response language", 
@@ -187,6 +197,14 @@ summarize = st.checkbox("Also summarize after formatting", value=True)
 # --- Processing PDF ---
 if uploaded_file:
     file_bytes = uploaded_file.read()
+
+       # ✅ ป้องกันไฟล์ว่าง
+    if not file_bytes:
+        st.error("❌ Uploaded file is empty. Please upload a valid PDF.")
+        st.stop()
+
+    with st.spinner("🔍 Extracting text from PDF..."):
+        raw_text = extract_text_from_pdf(file_bytes)
 
     with st.spinner("🔍 Extracting text from PDF..."):
         raw_text = extract_text_from_pdf(file_bytes)
@@ -206,6 +224,18 @@ if uploaded_file:
     if summarize:
         with st.spinner(f"📌 Summarizing in {language}..."):
             summary = summarize_text(formatted, language)
+            # ✅ ส่งข้อมูลไป backend
+            res = requests.post("http://localhost:8000/pdfs/", json={
+            "file_name": uploaded_file.name,
+            "original_text": raw_text,
+            "summary": summary
+            })
+
+        if res.status_code == 200:
+            st.success("✅ PDF saved to database!")
+        else:
+            st.error(f"❌ Failed to save to backend: {res.status_code} - {res.text}")
+
 
         st.markdown("## 📌 Summary")
         with st.expander("📝 View summary"):
@@ -249,3 +279,82 @@ if uploaded_file:
 
         copy_button(quiz, label="📋 Copy Quiz")
         st.download_button("💾 Download Quiz", quiz, file_name="quiz.md")
+
+API_URL = "http://localhost:8000"  # ปรับตามที่คุณรัน FastAPI
+
+def upload_to_backend(file_name, original_text, summary):
+    data = {
+        "file_name": file_name,
+        "original_text": original_text,
+        "summary": summary,
+    }
+    res = requests.post(f"{API_URL}/pdfs/", json=data)
+    return res
+
+def list_all_pdfs():
+    res = requests.get(f"{API_URL}/pdfs/")
+    if res.status_code == 200:
+        return res.json()
+    return []
+
+def delete_pdf(pdf_id):
+    return requests.delete(f"{API_URL}/pdfs/{pdf_id}")
+
+if uploaded_file:
+    file_bytes = uploaded_file.read()
+
+    # ✅ ตรวจว่าไม่ว่าง
+    if not file_bytes:
+        st.error("❌ Uploaded file is empty. Please upload a valid PDF.")
+        st.stop()
+
+    # ✅ OCR
+    with st.spinner("🔍 Extracting text from PDF..."):
+        raw_text = extract_text_from_pdf(file_bytes)
+
+    # ✅ Formatting
+    with st.spinner("🧼 Formatting..."):
+        formatted = format_text(raw_text, language)
+
+    # ✅ Summary
+    if summarize:
+        with st.spinner("📌 Summarizing..."):
+            summary = summarize_text(formatted, language)
+
+    # ✅ ส่งเข้า backend
+    if st.button("💾 Save to Database"):
+        payload = {
+            "file_name": uploaded_file.name,
+            "original_text": raw_text,
+            "summary": summary or ""
+        }
+        res = requests.post("http://localhost:8000/pdfs/", json=payload)
+        if res.status_code == 200:
+            st.success("✅ Saved to database")
+        else:
+            st.error("❌ Save failed")
+
+
+st.markdown("---")
+st.markdown("## 📚 Your Uploaded PDFs")
+
+pdfs = list_all_pdfs()
+if not pdfs:
+    st.info("No PDFs found.")
+else:
+    for pdf in pdfs:
+        with st.expander(f"📄 {pdf['file_name']}"):
+            st.markdown(f"📝 **Original Text**")
+            st.text_area("Original", pdf["original_text"], height=150)
+            st.markdown(f"📌 **Summary**")
+            st.text_area("Summary", pdf["summary"], height=150)
+
+            if st.button("🗑️ Delete", key=pdf["id"]):
+                del_res = delete_pdf(pdf["id"])
+                if del_res.status_code == 200:
+                    st.success("Deleted successfully.")
+                    st.rerun()
+                else:
+                    st.error("Failed to delete.")
+
+
