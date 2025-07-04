@@ -88,12 +88,13 @@ async def get_user_teams(
     db = get_database()
     
     # Find teams where user is owner or member
-    teams = await db.teams.find({
+    cursor = db.teams.find({
         "$or": [
             {"owner_id": current_user["_id"]},
             {"members.user_id": current_user["_id"]}
         ]
-    }).to_list(length=None)
+    })
+    teams = await cursor.to_list(length=None)
     
     # Convert ObjectIds to strings
     for team in teams:

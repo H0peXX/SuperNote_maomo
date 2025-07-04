@@ -48,7 +48,7 @@ class MockCollection:
                 return result
         return None
     
-    async def find(self, filter_dict: Dict = None, projection: Dict = None):
+    def find(self, filter_dict: Dict = None, projection: Dict = None):
         """Find multiple documents"""
         return MockCursor(self, filter_dict, projection)
     
@@ -174,13 +174,17 @@ class MockCursor:
     
     def skip(self, count: int):
         """Skip documents"""
-        self._skip_count = count
-        return self
+        new_cursor = MockCursor(self.collection, self.filter_dict, self.projection)
+        new_cursor._skip_count = count
+        new_cursor._limit_count = self._limit_count
+        return new_cursor
     
     def limit(self, count: int):
         """Limit documents"""
-        self._limit_count = count
-        return self
+        new_cursor = MockCursor(self.collection, self.filter_dict, self.projection)
+        new_cursor._skip_count = self._skip_count
+        new_cursor._limit_count = count
+        return new_cursor
     
     async def to_list(self, length: Optional[int] = None) -> List[Dict]:
         """Convert to list"""

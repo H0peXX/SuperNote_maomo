@@ -84,7 +84,8 @@ async def get_topic_notes(
     """Get all notes under a topic"""
     db = get_database()
     
-    notes = await db.notes.find({"topic_id": topic_id}).to_list(length=None)
+    cursor = db.notes.find({"topic_id": topic_id})
+    notes = await cursor.to_list(length=None)
     
     # Convert ObjectIds to strings
     for note in notes:

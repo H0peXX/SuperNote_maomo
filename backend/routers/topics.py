@@ -141,7 +141,8 @@ async def get_team_topics(
         )
     
     # Get topics
-    topics = await db.topics.find({"team_id": team_id}).to_list(length=None)
+    cursor = db.topics.find({"team_id": team_id})
+    topics = await cursor.to_list(length=None)
     
     # Convert ObjectIds to strings
     for topic in topics:
@@ -302,7 +303,8 @@ async def search_topics(
         ]
     }
     
-    topics = await db.topics.find(search_filter).to_list(length=None)
+    cursor = db.topics.find(search_filter)
+    topics = await cursor.to_list(length=None)
     
     # Convert ObjectIds to strings
     for topic in topics:

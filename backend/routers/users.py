@@ -18,10 +18,11 @@ async def get_users(
     """Get list of users (requires authentication)"""
     db = get_database()
     
-    users = await db.users.find(
+    cursor = db.users.find(
         {"is_active": True},
         {"hashed_password": 0}  # Exclude password field
-    ).skip(skip).limit(limit).to_list(length=limit)
+    ).skip(skip).limit(limit)
+    users = await cursor.to_list(length=limit)
     
     # Convert ObjectId to string
     for user in users:
@@ -160,10 +161,11 @@ async def search_users(
         ]
     }
     
-    users = await db.users.find(
+    cursor = db.users.find(
         search_filter,
         {"hashed_password": 0}
-    ).limit(limit).to_list(length=limit)
+    ).limit(limit)
+    users = await cursor.to_list(length=limit)
     
     # Convert ObjectId to string
     for user in users:
