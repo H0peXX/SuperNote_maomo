@@ -1,4 +1,20 @@
 # maomo
+
+cd front
+
+pip install streamlit requests
+pip install PyMuPDF
+pip install google-generativeai
+
+streamlit run app.py
+
+cd backend
+pip install fastapi uvicorn pydantic python-multipart PyMuPDF google-generativeai
+uvicorn main:app --reload --port 8000
+
+
+
+
 docker compose up
 
 for login pgadmin
