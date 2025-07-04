@@ -85,31 +85,64 @@ Maomo is a full-stack application that enables teams to collaborate on notes wit
    FRONTEND_URL=http://localhost:8501
    ```
 
-4. **Start the application**
+## 🚀 How to Run the Application for Testing
 
-   **Option A: Quick Start (Recommended)**
-   ```bash
-   python run_server.py
-   ```
-   This starts the backend server. Then in a new terminal:
-   ```bash
-   streamlit run frontend/app.py
-   ```
+You need to start both the backend server and the frontend application separately. Please follow these steps:
 
-   **Option B: Manual Start**
-   
-   Start backend:
-   ```bash
-   cd backend
-   python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
-   ```
-   
-   Start frontend (in new terminal):
-   ```bash
-   streamlit run frontend/app.py
-   ```
+### 1. Start the Backend Server
 
-5. **Access the application**
+This server runs the FastAPI backend with MongoDB support or mock database fallback.
+
+- From the project root, run:
+
+```bash
+python run_server.py
+```
+
+This script will:
+
+- Load environment variables from `.env`
+- Start FastAPI with Uvicorn on http://localhost:8000
+- Use MongoDB if available; otherwise, fallback on the mock database for testing
+
+**Important:** If you prefer manual start:
+
+```bash
+cd backend
+python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+```
+
+---
+
+### 2. Start the Frontend Application
+
+The current functional frontend uses Streamlit.
+
+- Run:
+
+```bash
+streamlit run frontend/app.py
+```
+
+This will start the frontend at http://localhost:8501, connecting to the backend at http://localhost:8000 by default (configured via `.env`).
+
+---
+
+### 3. Test the Application
+
+- Open http://localhost:8501 in your browser.
+- Register a new user account.
+- Create teams and topics.
+- Start taking collaborative notes.
+- Use AI features if configured.
+
+---
+
+If you want to try the new modern frontend (in development under `frontend-modern`), it will have separate instructions once completed.
+
+---
+
+### 4. Access Points
    - Frontend: http://localhost:8501
    - Backend API: http://localhost:8000
    - API Documentation: http://localhost:8000/docs
