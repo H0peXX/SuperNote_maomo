@@ -9,7 +9,6 @@ import io
 
 # === ตั้งค่า Gemini API ===
 genai.configure(api_key=os.getenv("GEMINI_API_KEY") or "AIzaSyCSDNEOTdNWtJoik1DnP68tXAWzFTCFk2c")
-vision_model = genai.GenerativeModel("gemini-pro-vision")
 text_model = genai.GenerativeModel("gemini-1.5-flash")
 
 # === FastAPI App ===
@@ -43,7 +42,7 @@ async def upload_pdf(file: UploadFile = File(...)):
         combined_text = ""
         for i, img in enumerate(images):
             prompt = f"Extract all readable text from page {i+1}."
-            result = vision_model.generate_content([prompt, img])
+            result = text_model.generate_content([prompt, img])
             combined_text += f"\n\n--- Page {i+1} ---\n{result.text}"
 
         return {"original_text": combined_text}
@@ -58,7 +57,7 @@ async def ocr_image(file: UploadFile = File(...)):
         image = Image.open(io.BytesIO(contents))
 
         prompt = "Extract all readable text from this image."
-        result = vision_model.generate_content([prompt, image])
+        result = text_model.generate_content([prompt, image])
 
         return {"text": result.text}
     except Exception as e:
