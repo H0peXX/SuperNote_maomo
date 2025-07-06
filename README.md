@@ -54,9 +54,19 @@ You can view this README.md file in several ways:
 
 ### 2. HTML Documentation
 For a more interactive experience with better formatting:
-- **Open in browser**: `Start-Process "docs/project_documentation.html"`
-- **File Explorer**: Navigate to `docs/project_documentation.html` and double-click
-- **Direct URL**: `file:///C:/Users/Melbourne/Documents/TLI-Projects/maomo/docs/project_documentation.html`
+
+#### From Repository Root:
+```bash
+# Using Python's built-in server
+python -m http.server 8000
+```
+Then open in browser: `http://localhost:8000/docs/project_documentation.html`
+
+#### From Deployed Version:
+Access the documentation at our team's documentation site:
+- Development: `https://dev-docs.maomo.com`
+- Staging: `https://staging-docs.maomo.com`
+- Production: `https://docs.maomo.com`
 
 ## 🚀 Quick Start
 
