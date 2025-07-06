@@ -99,13 +99,13 @@ async def fact_check_text(
 ):
     """Validate information and find sources"""
     try:
-        prompt = (
-            f"Please validate the following information. "
-            f"Identify if the key points are accurate and provide references or research sources to support them. "
-            f"Rate the accuracy as VERIFIED, QUESTIONABLE, or INACCURATE for each claim. "
-            f"Respond in {request.language}:\n\n"
-            f"{request.text}"
-        )
+        # Load fact-checking prompt template
+        prompt_path = os.path.join(os.path.dirname(__file__), '..', 'prompts', 'fact_check.txt')
+        with open(prompt_path, 'r') as f:
+            prompt_template = f.read()
+        
+        # Format prompt with content and language
+        prompt = prompt_template.replace('{{content}}', request.text).replace('{{language}}', request.language)
         
         response = g_model.generate_content(prompt)
         
