@@ -4,8 +4,8 @@ from datetime import datetime
 from bson import ObjectId
 from loguru import logger
 
-from models.schemas import NoteCreate, NoteUpdate, NoteResponse, FactCheckStatus, Comment, NoteVersion
-from auth.jwt_handler import get_current_active_user
+from backend.models.schemas import NoteCreate, NoteUpdate, NoteResponse, FactCheckStatus, Comment, NoteVersion
+from backend.auth.jwt_handler import get_current_active_user
 from database.mongodb import get_database
 
 router = APIRouter()
@@ -197,6 +197,120 @@ async def add_collaborator(
     )
     
     return {"message": "Collaborator added successfully"}
+
+@router.post("/{note_id}/fact-checks")
+async def fact_check_note(
+    note_id: str,
+    current_user: dict = Depends(get_current_active_user)
+):
+    """Fact-check note content using AI"""
+    note = await check_note_permission(note_id, current_user["_id"])
+    
+    if not note.get("content"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Note has no content to fact-check"
+        )
+    
+    # Import AI processing
+    import google.generativeai as genai
+    import os
+    
+    try:
+        # Configure AI if not already done
+        api_key = os.getenv("GEMINI_API_KEY")
+        if not api_key:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="AI service not available - API key not configured"
+            )
+        
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel("gemini-1.5-flash")
+        
+        # Create fact-checking prompt
+        prompt = f"""
+Please fact-check the following content and provide:
+1. Overall accuracy assessment (VERIFIED, QUESTIONABLE, or INACCURATE)
+2. Specific claims that need verification
+3. Sources or references where possible
+4. Confidence level (0-100%)
+
+Content to fact-check:
+{note['content']}
+
+Respond in JSON format:
+{{
+  "overall_status": "VERIFIED|QUESTIONABLE|INACCURATE",
+  "confidence": 85,
+  "claims": [
+    {{
+      "claim": "specific claim text",
+      "status": "VERIFIED|QUESTIONABLE|INACCURATE",
+      "explanation": "why this claim is accurate/questionable/inaccurate",
+      "sources": ["source1", "source2"]
+    }}
+  ],
+  "summary": "overall summary of fact-check results"
+}}
+"""
+        
+        response = model.generate_content(prompt)
+        ai_result = response.text
+        
+        # Try to parse JSON response, fallback to text if parsing fails
+        try:
+            import json
+            fact_check_data = json.loads(ai_result.strip().replace('```json', '').replace('```', ''))
+            overall_status = fact_check_data.get('overall_status', 'QUESTIONABLE')
+            confidence = fact_check_data.get('confidence', 75)
+            summary = fact_check_data.get('summary', ai_result)
+        except:
+            # Fallback to simple parsing
+            overall_status = "QUESTIONABLE"
+            confidence = 75
+            summary = ai_result
+            if "VERIFIED" in ai_result.upper():
+                overall_status = "VERIFIED"
+                confidence = 85
+            elif "INACCURATE" in ai_result.upper():
+                overall_status = "INACCURATE"
+                confidence = 90
+        
+        # Create fact-check record
+        fact_check = {
+            "id": str(ObjectId()),
+            "claim": "Overall content accuracy",
+            "status": overall_status.lower(),
+            "explanation": summary,
+            "sources": [],
+            "confidence": confidence / 100.0,
+            "checked_at": datetime.utcnow(),
+            "checked_by": current_user["_id"]
+        }
+        
+        # Update note with fact-check result
+        db = get_database()
+        await db.notes.update_one(
+            {"_id": ObjectId(note_id)},
+            {
+                "$push": {"fact_checks": fact_check},
+                "$set": {"updated_at": datetime.utcnow()}
+            }
+        )
+        
+        return {
+            "message": "Fact-check completed successfully",
+            "status": overall_status.lower(),
+            "confidence": confidence,
+            "summary": summary
+        }
+        
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error during fact-checking: {str(e)}"
+        )
 
 @router.delete("/{note_id}/collaborators/{user_id}")
 async def remove_collaborator(

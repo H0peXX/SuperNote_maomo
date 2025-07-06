@@ -3,8 +3,8 @@ from typing import List
 from bson import ObjectId
 from datetime import datetime
 
-from models.schemas import UserResponse, UserUpdate
-from auth.jwt_handler import get_current_active_user
+from backend.models.schemas import UserResponse, UserUpdate
+from backend.auth.jwt_handler import get_current_active_user
 from database.mongodb import get_database
 
 router = APIRouter()

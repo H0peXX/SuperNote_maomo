@@ -7,7 +7,7 @@ from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 import os
 from dotenv import load_dotenv
 
-from models.schemas import TokenData
+from backend.models.schemas import TokenData
 from database.mongodb import get_database
 
 load_dotenv()

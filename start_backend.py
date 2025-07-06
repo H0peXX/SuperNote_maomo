@@ -63,13 +63,9 @@ def start_backend():
     print("🔄 Auto-reload is enabled")
     print("\n" + "="*50)
     
-    # Change to backend directory
-    backend_dir = Path(__file__).parent / "backend"
-    os.chdir(backend_dir)
-    
-    # Start uvicorn
+    # Start uvicorn from the project root directory
     uvicorn.run(
-        "main:app",
+        "backend.main:app",
         host="0.0.0.0",
         port=8000,
         reload=True,

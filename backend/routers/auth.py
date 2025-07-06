@@ -3,8 +3,8 @@ from fastapi.security import HTTPAuthorizationCredentials
 from datetime import datetime, timedelta
 from bson import ObjectId
 
-from models.schemas import UserCreate, UserLogin, Token, UserResponse, UserRole
-from auth.jwt_handler import (
+from backend.models.schemas import UserCreate, UserLogin, Token, UserResponse, UserRole
+from backend.auth.jwt_handler import (
     verify_password, 
     get_password_hash, 
     create_access_token,

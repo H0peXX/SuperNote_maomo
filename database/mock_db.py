@@ -29,6 +29,7 @@ class MockCollection:
         self.name = name
         self.data: Dict[str, Dict] = {}
         self.indexes = set()
+        self.database = None  # Will be set by database
     
     async def find_one(self, filter_dict: Dict = None, projection: Dict = None) -> Optional[Dict]:
         """Find one document"""
@@ -57,6 +58,8 @@ class MockCollection:
         doc_id = str(ObjectId())
         document["_id"] = ObjectId(doc_id)
         self.data[doc_id] = document.copy()
+        if self.database:
+            self.database.save_data()
         return MockInsertResult(doc_id)
     
     async def update_one(self, filter_dict: Dict, update: Dict) -> 'MockUpdateResult':
@@ -74,6 +77,8 @@ class MockCollection:
                     for field, condition in update["$pull"].items():
                         if field in doc and isinstance(doc[field], list):
                             doc[field] = [item for item in doc[field] if not self._matches_filter(item, condition)]
+                if self.database:
+                    self.database.save_data()
                 return MockUpdateResult(1)
         return MockUpdateResult(0)
     
@@ -82,6 +87,8 @@ class MockCollection:
         for doc_id, doc in list(self.data.items()):
             if self._matches_filter(doc, filter_dict):
                 del self.data[doc_id]
+                if self.database:
+                    self.database.save_data()
                 return MockDeleteResult(1)
         return MockDeleteResult(0)
     
@@ -92,6 +99,8 @@ class MockCollection:
             if self._matches_filter(doc, filter_dict):
                 del self.data[doc_id]
                 deleted_count += 1
+        if deleted_count > 0 and self.database:
+            self.database.save_data()
         return MockDeleteResult(deleted_count)
     
     async def create_index(self, keys, **kwargs):
@@ -232,12 +241,68 @@ class MockDatabase:
     def __init__(self, name: str):
         self.name = name
         self.collections: Dict[str, MockCollection] = {}
+        self.data_file = f"mock_db_{name}.json"
+        self.load_data()
     
     def __getattr__(self, name: str) -> MockCollection:
         """Get collection by name"""
         if name not in self.collections:
-            self.collections[name] = MockCollection(name)
+            collection = MockCollection(name)
+            collection.database = self  # Link collection to database
+            self.collections[name] = collection
         return self.collections[name]
+    
+    def save_data(self):
+        """Save all collections to JSON file"""
+        try:
+            data = {}
+            for collection_name, collection in self.collections.items():
+                # Convert ObjectId to string for JSON serialization
+                collection_data = {}
+                for doc_id, doc in collection.data.items():
+                    doc_copy = doc.copy()
+                    if '_id' in doc_copy and hasattr(doc_copy['_id'], '_id'):
+                        doc_copy['_id'] = doc_copy['_id']._id
+                    elif '_id' in doc_copy:
+                        doc_copy['_id'] = str(doc_copy['_id'])
+                    # Convert any datetime objects to strings
+                    for key, value in doc_copy.items():
+                        if isinstance(value, datetime):
+                            doc_copy[key] = value.isoformat()
+                    collection_data[doc_id] = doc_copy
+                data[collection_name] = collection_data
+            
+            with open(self.data_file, 'w') as f:
+                json.dump(data, f, indent=2, default=str)
+        except Exception as e:
+            print(f"Warning: Could not save mock database: {e}")
+    
+    def load_data(self):
+        """Load collections from JSON file"""
+        try:
+            if os.path.exists(self.data_file):
+                with open(self.data_file, 'r') as f:
+                    data = json.load(f)
+                
+                for collection_name, collection_data in data.items():
+                    collection = MockCollection(collection_name)
+                    collection.database = self  # Link collection to database
+                    for doc_id, doc in collection_data.items():
+                        # Convert string dates back to datetime objects
+                        for key, value in doc.items():
+                            if isinstance(value, str) and key.endswith(('_at', '_date')):
+                                try:
+                                    doc[key] = datetime.fromisoformat(value)
+                                except:
+                                    pass
+                        # Ensure _id is ObjectId
+                        if '_id' in doc:
+                            doc['_id'] = ObjectId(doc['_id'])
+                        collection.data[doc_id] = doc
+                    self.collections[collection_name] = collection
+                print(f"✅ Loaded persistent data from {self.data_file}")
+        except Exception as e:
+            print(f"Warning: Could not load mock database: {e}")
 
 class MockClient:
     """Mock MongoDB client"""

@@ -230,13 +230,15 @@ def dashboard_page():
     notes_count = 0
     topics_count = 0
     if st.session_state.current_team:
-        topics_response = make_authenticated_request("GET", f"/api/topics/team/{st.session_state.current_team['id']}")
+        team_id = st.session_state.current_team.get('id', st.session_state.current_team.get('_id', ''))
+        topics_response = make_authenticated_request("GET", f"/api/topics/team/{team_id}")
         if topics_response and topics_response.status_code == 200:
             topics = topics_response.json()
             topics_count = len(topics)
             # Count notes across all topics
             for topic in topics:
-                notes_response = make_authenticated_request("GET", f"/api/notes/?topic_id={topic['id']}")
+                topic_id = topic.get('id', topic.get('_id', ''))
+                notes_response = make_authenticated_request("GET", f"/api/notes/?topic_id={topic_id}")
                 if notes_response and notes_response.status_code == 200:
                     notes_count += len(notes_response.json())
     
@@ -259,17 +261,17 @@ def dashboard_page():
     col1, col2, col3, col4 = st.columns(4)
     
     with col1:
-        if st.button("📄 Upload PDF", use_container_width=True):
+        if st.button("📄 Upload PDF", use_container_width=True, key="quick_pdf"):
             st.session_state.page = "AI Tools"
             st.rerun()
     
     with col2:
-        if st.button("👥 Create Team", use_container_width=True):
+        if st.button("👥 Create Team", use_container_width=True, key="quick_team"):
             st.session_state.page = "Teams"
             st.rerun()
     
     with col3:
-        if st.button("📁 Create Topic", use_container_width=True):
+        if st.button("📁 Create Topic", use_container_width=True, key="quick_topic"):
             if st.session_state.current_team:
                 st.session_state.page = "Topics"
                 st.rerun()
@@ -277,7 +279,7 @@ def dashboard_page():
                 st.error("Please select a team first")
     
     with col4:
-        if st.button("📝 New Note", use_container_width=True):
+        if st.button("📝 New Note", use_container_width=True, key="quick_note"):
             if st.session_state.current_topic:
                 st.session_state.page = "Notes"
                 st.rerun()
@@ -325,17 +327,20 @@ def teams_page():
                         
                         col_a, col_b, col_c = st.columns(3)
                         with col_a:
-                            if st.button(f"Select {team['name']}", key=f"select_{team['id']}"):
+                            team_id = team.get('id', team.get('_id', ''))
+                            if st.button(f"Select {team['name']}", key=f"select_{team_id}"):
                                 st.session_state.current_team = team
                                 st.session_state.current_topic = None
                                 st.success(f"Selected team: {team['name']}")
                         with col_b:
-                            if st.button(f"View Topics", key=f"topics_{team['id']}"):
+                            team_id = team.get('id', team.get('_id', ''))
+                            if st.button(f"View Topics", key=f"topics_{team_id}"):
                                 st.session_state.current_team = team
                                 st.session_state.page = "Topics"
                                 st.rerun()
                         with col_c:
-                            if st.button(f"Settings", key=f"settings_{team['id']}"):
+                            team_id = team.get('id', team.get('_id', ''))
+                            if st.button(f"Settings", key=f"settings_{team_id}"):
                                 st.session_state.current_team = team
                                 # Open team settings modal or section
             else:
@@ -373,7 +378,8 @@ def topics_page():
     st.subheader(f"Topics for {st.session_state.current_team['name']}")
     
     # Get topics for current team
-    response = make_authenticated_request("GET", f"/api/topics/team/{st.session_state.current_team['id']}")
+    team_id = st.session_state.current_team.get('id', st.session_state.current_team.get('_id', ''))
+    response = make_authenticated_request("GET", f"/api/topics/team/{team_id}")
     if response and response.status_code == 200:
         topics = response.json()
         
@@ -391,16 +397,19 @@ def topics_page():
                         
                         col_a, col_b, col_c = st.columns(3)
                         with col_a:
-                            if st.button(f"Select Topic", key=f"select_topic_{topic['id']}"):
+                            topic_id = topic.get('id', topic.get('_id', ''))
+                            if st.button(f"Select Topic", key=f"select_topic_{topic_id}"):
                                 st.session_state.current_topic = topic
                                 st.success(f"Selected topic: {topic['name']}")
                         with col_b:
-                            if st.button(f"View Notes", key=f"notes_{topic['id']}"):
+                            topic_id = topic.get('id', topic.get('_id', ''))
+                            if st.button(f"View Notes", key=f"notes_{topic_id}"):
                                 st.session_state.current_topic = topic
                                 st.session_state.page = "Notes"
                                 st.rerun()
                         with col_c:
-                            if st.button(f"Edit", key=f"edit_{topic['id']}"):
+                            topic_id = topic.get('id', topic.get('_id', ''))
+                            if st.button(f"Edit", key=f"edit_{topic_id}"):
                                 st.session_state.editing_topic = topic
             else:
                 st.info("No topics found. Create your first topic!")
@@ -421,7 +430,7 @@ def topics_page():
                             "name": topic_name,
                             "description": topic_description,
                             "tags": tags_list,
-                            "team_id": st.session_state.current_team['id']
+                            "team_id": st.session_state.current_team.get('id', st.session_state.current_team.get('_id', ''))
                         }
                     )
                     if response and response.status_code == 201:
@@ -447,7 +456,8 @@ def notes_page():
     st.subheader(f"Notes for Topic: {st.session_state.current_topic['name']}")
     
     # Get notes for current topic
-    response = make_authenticated_request("GET", f"/api/notes/?topic_id={st.session_state.current_topic['id']}")
+    topic_id = st.session_state.current_topic.get('id', st.session_state.current_topic.get('_id', ''))
+    response = make_authenticated_request("GET", f"/api/notes/?topic_id={topic_id}")
     if response and response.status_code == 200:
         notes = response.json()
         
@@ -470,21 +480,22 @@ def notes_page():
                                 st.markdown(f"<div class='{status_class}'>{fact_check['claim']}: {fact_check['status'].upper()}</div>", unsafe_allow_html=True)
                         
                         col_a, col_b, col_c, col_d = st.columns(4)
+                        note_id = note.get('id', note.get('_id', ''))
                         with col_a:
-                            if st.button(f"Edit", key=f"edit_note_{note['id']}"):
+                            if st.button(f"Edit", key=f"edit_note_{note_id}"):
                                 st.session_state.current_note = note
                                 st.session_state.editing_mode = True
                         with col_b:
-                            if st.button(f"Fact Check", key=f"fact_check_{note['id']}"):
+                            if st.button(f"Fact Check", key=f"fact_check_{note_id}"):
                                 # Trigger AI fact-checking
                                 fact_check_response = make_authenticated_request(
-                                    "POST", f"/api/notes/{note['id']}/fact-checks"
+                                    "POST", f"/api/notes/{note_id}/fact-checks"
                                 )
                                 if fact_check_response and fact_check_response.status_code == 200:
                                     st.success("Fact-checking completed!")
                                     st.rerun()
                         with col_c:
-                            if st.button(f"AI Enhance", key=f"enhance_{note['id']}"):
+                            if st.button(f"AI Enhance", key=f"enhance_{note_id}"):
                                 # Trigger AI enhancement
                                 enhance_response = make_authenticated_request(
                                     "POST", "/api/ai/enhance-note",
@@ -499,8 +510,8 @@ def notes_page():
                                     st.info("AI Enhancement Suggestion:")
                                     st.markdown(result['result'])
                         with col_d:
-                            if st.button(f"Comments ({len(note.get('comments', []))})", key=f"comments_{note['id']}"):
-                                st.session_state.show_comments = note['id']
+                            if st.button(f"Comments ({len(note.get('comments', []))})", key=f"comments_{note_id}"):
+                                st.session_state.show_comments = note_id
             else:
                 st.info("No notes found. Create your first note!")
         
@@ -516,8 +527,9 @@ def notes_page():
                     col_save, col_cancel = st.columns(2)
                     with col_save:
                         if st.form_submit_button("Save Changes"):
+                            note_id = st.session_state.current_note.get('id', st.session_state.current_note.get('_id', ''))
                             response = make_authenticated_request(
-                                "PUT", f"/api/notes/{st.session_state.current_note['id']}",
+                                "PUT", f"/api/notes/{note_id}",
                                 json={
                                     "title": note_title,
                                     "content": note_content,
@@ -550,7 +562,7 @@ def notes_page():
                             json={
                                 "title": note_title,
                                 "content": note_content,
-                                "topic_id": st.session_state.current_topic['id'],
+                                "topic_id": st.session_state.current_topic.get('id', st.session_state.current_topic.get('_id', '')),
                                 "status": note_status
                             }
                         )
@@ -601,17 +613,31 @@ def ai_tools_page():
         if st.button("🚀 Process PDF"):
             # Process with backend API
             with st.spinner("Processing PDF..."):
-                files = {"file": uploaded_file.getvalue()}
+                # Reset file pointer
+                uploaded_file.seek(0)
+                
+                files = {"file": (uploaded_file.name, uploaded_file.getvalue(), "application/pdf")}
                 data = {
                     "language": language,
                     "operation": "format"
                 }
                 
-                response = make_authenticated_request(
-                    "POST", "/api/ai/process-pdf",
-                    files=files,
-                    data=data
-                )
+                # Use requests directly for file upload
+                import requests
+                headers = {
+                    "Authorization": f"Bearer {st.session_state.token}"
+                }
+                
+                try:
+                    response = requests.post(
+                        f"{BACKEND_URL}/api/ai/process-pdf",
+                        files=files,
+                        data=data,
+                        headers=headers
+                    )
+                except Exception as e:
+                    st.error(f"Upload error: {e}")
+                    response = None
                 
                 if response and response.status_code == 200:
                     result = response.json()
@@ -680,21 +706,25 @@ def main():
         # Sidebar navigation
         page = sidebar_navigation()
         
-        # Store current page in session state
-        st.session_state.page = page
+        # Handle page changes from quick actions
+        if 'page' not in st.session_state:
+            st.session_state.page = page
+        
+        # If page changed from quick action, use that instead
+        current_page = st.session_state.page if hasattr(st.session_state, 'page') else page
         
         # Route to appropriate page
-        if page == "Dashboard":
+        if current_page == "Dashboard":
             dashboard_page()
-        elif page == "Teams":
+        elif current_page == "Teams":
             teams_page()
-        elif page == "Topics":
+        elif current_page == "Topics":
             topics_page()
-        elif page == "Notes":
+        elif current_page == "Notes":
             notes_page()
-        elif page == "AI Tools":
+        elif current_page == "AI Tools":
             ai_tools_page()
-        elif page == "Settings":
+        elif current_page == "Settings":
             settings_page()
 
 if __name__ == "__main__":

@@ -8,8 +8,8 @@ import os
 from dotenv import load_dotenv
 
 from database.mongodb import init_database, close_database
-from routers import auth, teams, notes, users, ai, topics
-from auth.jwt_handler import verify_token
+from backend.routers import auth, teams, notes, users, ai, topics
+from backend.auth.jwt_handler import verify_token
 
 load_dotenv()
 
