@@ -237,34 +237,88 @@ class NotesPage {
 
     async postComment(noteId) {
         const content = document.getElementById('new-comment').value;
-        if (!content) return;
+        if (!content.trim()) {
+            showToast('Comment cannot be empty', 'error');
+            return;
+        }
 
         try {
-            const response = await api.post(`/api/notes/${noteId}/comments`, {
-                content
-            });
-
-            if (response.ok) {
-                const comment = await response.json();
-                const commentsList = document.getElementById('comments-list');
-                commentsList.innerHTML += this.renderComments([comment]);
-                document.getElementById('new-comment').value = '';
-            }
+            showToast('Posting comment...', 'info');
+            const comment = await api.addComment(noteId, content);
+            
+            // Update UI
+            const commentsList = document.getElementById('comments-list');
+            commentsList.insertAdjacentHTML('beforeend', this.renderComments([comment]));
+            
+            // Clear input
+            document.getElementById('new-comment').value = '';
+            
+            showToast('Comment added successfully', 'success');
         } catch (error) {
-            showToast('Error posting comment', 'error');
+            console.error('Error posting comment:', error);
+            showToast('Failed to add comment', 'error');
         }
     }
 
     async runFactCheck(noteId) {
+        const note = this.notes.find(n => n._id === noteId);
+        if (!note) return;
+        
         try {
-            const response = await api.post(`/api/notes/${noteId}/fact-checks`);
-            if (response.ok) {
-                const result = await response.json();
-                const factChecksList = document.getElementById('fact-checks-list');
-                factChecksList.innerHTML = this.renderFactChecks(result.fact_checks);
-                showToast('Fact check completed', 'success');
+            showToast('Running fact check...', 'info');
+            
+            // Get current note content
+            const content = document.getElementById('note-content').value;
+            
+            // Run fact check
+            const result = await api.factCheckContent(content);
+            
+            // Update UI
+            const factChecksList = document.getElementById('fact-checks-list');
+            
+            // Group claims by accuracy
+            const groupedClaims = {
+                inaccurate: [],
+                questionable: [],
+                verified: []
+            };
+            
+            result.fact_checks.forEach(check => {
+                groupedClaims[check.status.toLowerCase()].push(check);
+            });
+            
+            // Render fact checks, showing inaccurate and questionable first
+            const orderedChecks = [
+                ...groupedClaims.inaccurate,
+                ...groupedClaims.questionable,
+                ...groupedClaims.verified
+            ];
+            
+            factChecksList.innerHTML = this.renderFactChecks(orderedChecks);
+            
+            // Show summary toast
+            const inaccurateCount = groupedClaims.inaccurate.length;
+            const questionableCount = groupedClaims.questionable.length;
+            const verifiedCount = groupedClaims.verified.length;
+            
+            let message = 'Fact check completed: ';
+            if (inaccurateCount > 0) {
+                message += `${inaccurateCount} inaccurate, `;
             }
+            if (questionableCount > 0) {
+                message += `${questionableCount} questionable, `;
+            }
+            message += `${verifiedCount} verified claims`;
+            
+            showToast(message, inaccurateCount > 0 ? 'warning' : 'success');
+            
+            // Save fact check results
+            await api.post(`/api/notes/${noteId}/fact-checks`, {
+                fact_checks: orderedChecks
+            });
+            
         } catch (error) {
+            console.error('Error running fact check:', error);
             showToast('Error running fact check', 'error');
         }
     }

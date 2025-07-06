@@ -10,7 +10,7 @@
       "created_at": "2025-07-06T09:06:14.492626",
       "updated_at": "2025-07-06T09:06:14.492630",
       "_id": "686a3c86aca22a450a06ee8d",
-      "last_login": "2025-07-06T10:08:47.313708"
+      "last_login": "2025-07-06T17:01:59.510208"
     }
   },
   "teams": {
@@ -61,14 +61,38 @@
           "confidence": 0.85,
           "checked_at": "2025-07-06 09:11:44.388163",
           "checked_by": "686a3c86aca22a450a06ee8d"
+        },
+        {
+          "id": "686a5d3acc94ff24bb5e736f",
+          "claim": "Overall content accuracy",
+          "status": "questionable",
+          "explanation": "The provided text is largely accurate regarding Y\u016bdachi's specifications and operational deployments. However, claims about the sinking of USS Gregory, USS Little, and the final sinking of Y\u016bdachi itself require further verification to assess the degree of Y\u016bdachi's involvement and definitively establish cause and effect.  The claim about a white flag warrants careful scrutiny due to potential biases and lack of primary source confirmation.",
+          "sources": [],
+          "confidence": 0.85,
+          "checked_at": "2025-07-06 11:25:46.976647",
+          "checked_by": "686a3c86aca22a450a06ee8d"
         }
       ],
       "comments": [],
       "versions": [],
       "created_at": "2025-07-06T09:09:52.773370",
-      "updated_at": "2025-07-06T09:11:44.388177",
+      "updated_at": "2025-07-06T11:25:46.976662",
       "_id": "686a3d60aca22a450a06ee91",
       "status": "draft"
+    },
+    "686a53356d4e676508113bd0": {
+      "title": "aSD",
+      "content": "aSDA",
+      "topic_id": "686a4fcf6d4e676508113bcf",
+      "team_id": "686a3cafaca22a450a06ee8f",
+      "created_by": "686a3c86aca22a450a06ee8d",
+      "collaborators": [],
+      "fact_checks": [],
+      "comments": [],
+      "versions": [],
+      "created_at": "2025-07-06T10:43:01.726620",
+      "updated_at": "2025-07-06T10:43:01.726623",
+      "_id": "686a53356d4e676508113bd0"
     }
   },
   "topics": {
@@ -83,6 +107,18 @@
       "created_at": "2025-07-06T09:08:50.703346",
       "updated_at": "2025-07-06T09:08:50.703353",
       "_id": "686a3d22aca22a450a06ee90"
+    },
+    "686a4fcf6d4e676508113bcf": {
+      "name": "ASD",
+      "description": "ASDA",
+      "tags": [
+        "ASDA"
+      ],
+      "team_id": "686a3cafaca22a450a06ee8f",
+      "created_by": "686a3c86aca22a450a06ee8d",
+      "created_at": "2025-07-06T10:28:31.715370",
+      "updated_at": "2025-07-06T10:28:31.715374",
+      "_id": "686a4fcf6d4e676508113bcf"
     }
   }
 }

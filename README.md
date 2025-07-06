@@ -40,6 +40,24 @@ Maomo is a full-stack application that enables teams to collaborate on notes wit
 - **AI Integration**: Google Gemini API for content processing
 - **Authentication**: JWT tokens with bcrypt password hashing
 
+## 📖 Project Documentation
+
+This project's documentation is available in two formats:
+
+### 1. Markdown (this file)
+You can view this README.md file in several ways:
+- **VS Code**: `code README.md`
+- **Notepad**: `notepad README.md`
+- **Web Browser with GitHub Preview**:
+  - Install a Markdown Viewer extension
+  - Or view on GitHub's website
+
+### 2. HTML Documentation
+For a more interactive experience with better formatting:
+- **Open in browser**: `Start-Process "docs/project_documentation.html"`
+- **File Explorer**: Navigate to `docs/project_documentation.html` and double-click
+- **Direct URL**: `file:///C:/Users/Melbourne/Documents/TLI-Projects/maomo/docs/project_documentation.html`
+
 ## 🚀 Quick Start
 
 ### Prerequisites
@@ -149,29 +167,59 @@ If you want to try the new modern frontend (in development under `frontend-moder
 
 ## 📖 Usage Guide
 
+### Understanding the Dashboard
+
+1. **Stats Overview**
+   - **Total Notes**: Shows all notes you have access to across teams
+   - **Active Teams**: Number of teams you're part of
+   - **Fact Checks**: Total fact checks performed across all notes
+   - **AI Enhancements**: Count of AI-enhanced content versions
+
+2. **Recent Activity**
+   - Latest modified notes with timestamps
+   - Recent team changes and updates
+   - Pending fact checks needing review
+   - New comments on your notes
+   - AI enhancement suggestions
+
+3. **Team Overview**
+   - Member count and roles
+   - Activity metrics per team
+   - Collaboration statistics
+   - Recent changes by team members
+
+4. **Quick Actions**
+   - Create new note
+   - Start fact check process
+   - Upload PDF for processing
+   - Manage team settings
+   - Access AI tools
+
 ### Getting Started
 
 1. **Register an Account**
-   - Open http://localhost:8501
-   - Click on "Register" tab
-   - Fill in your details and create an account
+   - Access the login page
+   - Click "Sign Up" tab
+   - Enter your details
+   - Verify your email (if enabled)
 
-2. **Create Your First Team**
-   - Navigate to "Teams" page
-   - Click "Create New Team"
-   - Enter team name and description
+2. **Create or Join a Team**
+   - Go to Teams section
+   - Create new team OR
+   - Accept team invitation
+   - Set up team preferences
 
-3. **Organize with Topics**
-   - Select your team
-   - Go to "Topics" page
-   - Create topics to organize your notes
-   - Add tags for better categorization
+3. **Organize Content**
+   - Create topics for organization
+   - Add descriptive tags
+   - Set up workspaces
+   - Configure access permissions
 
-4. **Start Taking Notes**
-   - Select a topic
-   - Go to "Notes" page
-   - Create your first note
-   - Use AI features for enhancement
+4. **Start Collaborating**
+   - Create new notes
+   - Invite team members
+   - Use AI enhancements
+   - Monitor fact checks
 
 ### Team Management
 
@@ -186,26 +234,108 @@ If you want to try the new modern frontend (in development under `frontend-moder
 - **Content Processing**: Upload PDFs for automatic text extraction and processing
 - **Quiz Generation**: Generate quizzes from your notes for learning
 
+## 🔄 Features Status
+
+### Currently Missing Features
+
+1. **Chatbot Integration**
+   - AI-powered chat assistance
+   - Context-aware responses
+   - Team-specific knowledge base
+   - Command execution via chat
+
+2. **Mobile Support**
+   - Native mobile apps
+   - Responsive design improvements
+   - Offline capabilities
+   - Push notifications
+
+3. **Advanced Collaboration**
+   - Real-time cursor tracking
+   - Presence indicators
+   - Voice/video chat
+   - Screen sharing
+
+4. **Enhanced File Support**
+   - Multiple file types beyond PDF
+   - File version control
+   - Media file processing
+   - Cloud storage integration
+
+5. **Analytics & Reporting**
+   - Team activity reports
+   - Usage statistics
+   - AI usage metrics
+   - Performance analytics
+
+### Planned Features
+
+1. **Smart Assistant**
+   - AI-powered writing assistance
+   - Content recommendations
+   - Automated tagging
+   - Smart search suggestions
+
+2. **Integration Ecosystem**
+   - Calendar integration
+   - Task management
+   - Third-party apps
+   - API marketplace
+
+3. **Advanced Security**
+   - End-to-end encryption
+   - Two-factor authentication
+   - SSO integration
+   - Audit logging
+
+4. **Enhanced AI Features**
+   - Custom AI models
+   - Training on team data
+   - Multi-language support
+   - Advanced analytics
+
+5. **Team Collaboration**
+   - Project management
+   - Timeline views
+   - Kanban boards
+   - Resource tracking
+
 ## 🔧 Development
 
 ### Project Structure
 
 ```
 maomo/
-├── backend/                 # FastAPI backend
-│   ├── auth/               # Authentication modules
-│   ├── models/             # Pydantic schemas
-│   ├── routers/            # API route handlers
-│   └── main.py            # FastAPI application
-├── database/               # Database modules
-│   ├── mongodb.py         # MongoDB connection
-│   └── mock_db.py         # Mock database for testing
-├── frontend/               # Streamlit frontend
-│   ├── app.py             # Main Streamlit app
-│   └── utils/             # Frontend utilities
-├── .env.template          # Environment template
-├── requirements.txt       # Python dependencies
-└── run_server.py         # Server startup script
+├── backend/                    # FastAPI backend
+│   ├── auth/                  # Authentication modules
+│   ├── models/                # Pydantic schemas
+│   ├── routers/               # API route handlers
+│   └── main.py               # FastAPI application
+├── database/                  # Database modules
+│   ├── mongodb.py            # MongoDB connection
+│   └── mock_db.py            # Mock database for testing
+├── frontend-modern/           # Modern frontend (Active)
+│   ├── css/                  # Stylesheets
+│   │   ├── styles.css       # Base styles
+│   │   ├── components.css   # Component styles
+│   │   └── animations.css   # Animations
+│   ├── js/                   # JavaScript modules
+│   │   ├── pages/           # Page components
+│   │   ├── components/      # Reusable components
+│   │   ├── utils/           # Helper functions
+│   │   ├── api.js           # API client
+│   │   └── app.js           # Main application
+│   └── index.html           # Main HTML file
+├── frontend/                  # Legacy Streamlit frontend
+│   ├── app.py                # Streamlit app
+│   └── utils/                # Frontend utilities
+├── tests/                     # Test suites
+│   ├── unit/                 # Unit tests
+│   ├── integration/          # Integration tests
+│   └── e2e/                  # End-to-end tests
+├── .env.template             # Environment template
+├── requirements.txt          # Python dependencies
+└── run_server.py            # Server startup script
 ```
 
 ### API Documentation
