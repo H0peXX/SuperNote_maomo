@@ -1,0 +1,5 @@
+# Ignore all .mjs files
+*.mjs
+
+# Ignore node_modules directory
+node_modules/
