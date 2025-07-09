@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SuperNote Signup</title>
+</head>
+<body>
+    <h1>Create a new account</h1>
+    
+    <form id="signup-form">
+        <label for="username">Username:</label>
+        <input type="text" id="username" name="username" required /><br><br>
+
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required /><br><br>
+
+        <button type="submit">Sign Up</button>
+        <button type="button" id="login-btn">Back to Login</button>
+    </form>
+
+    <p id="signup-status"></p>
+
+    <script>
+        document.getElementById('signup-form').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const username = document.getElementById('username').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const response = await fetch('http://localhost:5000/api/signup', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const result = await response.json();
+                const statusElement = document.getElementById('signup-status');
+
+                if (response.ok) {
+                    statusElement.innerText = 'Signup successful! Please login.';
+                } else {
+                    statusElement.innerText = 'Signup failed: ' + result.error;
+                }
+            } catch (error) {
+                document.getElementById('signup-status').innerText = 'Network error';
+            }
+        });
+
+        document.getElementById('login-btn').addEventListener('click', function() {
+            window.location.href = 'index.html';
+        });
+    </script>
+</body>
+</html>
