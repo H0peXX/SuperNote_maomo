@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SuperNote</title>
+</head>
+<body>
+    <h1>Welcome to SuperNote</h1>
+    <button onclick="fetchUser()">Get User</button>
+    <p id="user-output"></p>
+
+    <script>
+        async function fetchUser() {
+            const response = await fetch('http://localhost:5000/api/user');
+            const data = await response.json();
+            document.getElementById('user-output').innerText = data.username || data.error;
+        }
+    </script>
+</body>
+</html>
