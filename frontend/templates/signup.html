@@ -1,11 +1,13 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <title>SuperNote Signup</title>
 </head>
+
 <body>
     <h1>Create a new account</h1>
-    
+
     <form id="signup-form">
         <label for="username">Username:</label>
         <input type="text" id="username" name="username" required /><br><br>
@@ -17,8 +19,8 @@
         <input type="text" id="fname" name="fname" required /><br><br>
 
         <label for="lname">last name:</label>
-        <input type="text" id="lname" name="lname" required /><br><br>      
-        
+        <input type="text" id="lname" name="lname" required /><br><br>
+
         <label for="email">email:</label>
         <input type="email" id="email" name="email" required /><br><br>
 
@@ -32,17 +34,28 @@
     <p id="signup-status"></p>
 
     <script>
-        document.getElementById('signup-form').addEventListener('submit', async function(e) {
+        document.getElementById('signup-form').addEventListener('submit', async function (e) {
             e.preventDefault();
 
             const username = document.getElementById('username').value;
             const password = document.getElementById('password').value;
+            const fname = document.getElementById('fname').value;
+            const lname = document.getElementById('lname').value;
+            const email = document.getElementById('email').value;
+            const dob = document.getElementById('dob').value;
 
             try {
                 const response = await fetch('http://localhost:5000/api/signup', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ username, password })
+                    body: JSON.stringify({
+                        username,
+                        password,
+                        fname,
+                        lname,
+                        email,
+                        dob
+                    })
                 });
 
                 const result = await response.json();
@@ -58,9 +71,11 @@
             }
         });
 
-        document.getElementById('login-btn').addEventListener('click', function() {
+        document.getElementById('login-btn').addEventListener('click', function () {
             window.location.href = 'index.html';
         });
     </script>
+
 </body>
+
 </html>

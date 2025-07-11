@@ -1,8 +1,11 @@
-from flask import Blueprint, jsonify ,request
+from flask import Blueprint, jsonify, request
+from datetime import datetime
 from db.connect import user_collection
+import bcrypt
 
 user_bp = Blueprint('user', __name__)
 
+# --- Get first user (for test/demo) ---
 @user_bp.route('/api/user', methods=['GET'])
 def get_user():
     document = user_collection.find_one()
@@ -12,6 +15,7 @@ def get_user():
         return jsonify({"error": "No user found or 'username' field missing."}), 404
 
 
+# --- Login route ---
 @user_bp.route('/api/login', methods=['POST'])
 def login():
     data = request.get_json()
@@ -21,14 +25,20 @@ def login():
     if not username or not password:
         return jsonify({'error': 'Username and password are required'}), 400
 
-    user = user_collection.find_one({'username': username, 'password': password})
-    if user:
+    user = user_collection.find_one({'username': username})
+    if not user:
+        return jsonify({'error': 'Invalid credentials'}), 401
+
+    # Compare password with hash in database
+    stored_hash = user.get('password')
+    if stored_hash and bcrypt.checkpw(password.encode('utf-8'), stored_hash.encode('utf-8')):
         return jsonify({'message': 'Login successful', 'username': user['username']})
     else:
         return jsonify({'error': 'Invalid credentials'}), 401
-    
 
-@user_bp.route('/api/signup', methods =['POST'])
+
+# --- Signup route ---
+@user_bp.route('/api/signup', methods=['POST'])
 def signup():
     data = request.get_json()
 
@@ -37,19 +47,18 @@ def signup():
     fname = data.get('fname')
     lname = data.get('lname')
     email = data.get('email')
-    dob = data.get('dob')         # Expecting string (e.g. 'YYYY-MM-DD')
-    create_at = data.get('create_at')  # Optional, if not provided will set now
+    dob = data.get('dob')  # Expecting string (e.g. 'YYYY-MM-DD')
+    create_at = data.get('create_at')  # Optional ISO datetime string
+    print("Received data:", data)
 
-    # Basic required field check
     if not username or not password or not email:
         return jsonify({'error': 'Username, password, and email are required'}), 400
 
-    # Check if username already exists
     existing_user = user_collection.find_one({'username': username})
     if existing_user:
         return jsonify({'error': 'Username already exists'}), 409
 
-    # Optional: parse dob string to date object
+    # Parse DOB
     dob_date = None
     if dob:
         try:
@@ -57,7 +66,7 @@ def signup():
         except ValueError:
             return jsonify({'error': 'DOB must be in YYYY-MM-DD format'}), 400
 
-    # Set create_at to now if not provided or invalid
+    # Parse or set create_at
     if create_at:
         try:
             create_at_date = datetime.strptime(create_at, '%Y-%m-%dT%H:%M:%S')
@@ -66,10 +75,12 @@ def signup():
     else:
         create_at_date = datetime.utcnow()
 
-    # Insert new user (plaintext password - for demo only)
+    # Hash password
+    hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+
     new_user = {
         'username': username,
-        'password': password,   # WARNING: Store hashed passwords in real app!
+        'password': hashed_password.decode('utf-8'),
         'first_name': fname,
         'last_name': lname,
         'email': email,

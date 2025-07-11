@@ -8,7 +8,7 @@ import re
 import random
 
 # --- Configure Gemini API ---
-genai.configure(api_key=os.getenv("GEMINI_API_KEY") or "AIzaSyCSDNEOTdNWtJoik1DnP68tXAWzFTCFk2c")
+genai.configure(api_key=os.getenv("GEMINI_API_KEY") )
 g_model = genai.GenerativeModel("gemini-1.5-flash")
 
 # --- Functions ---

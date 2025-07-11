@@ -32,6 +32,8 @@ Update the database configuration in `connect.py`:
 Start the Flask development server:
 ```bash
 python app.py
+
+python -m http.server 8000
 ```
 
 The application will be available at `http://localhost:5000`
