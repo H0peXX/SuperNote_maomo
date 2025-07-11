@@ -1,64 +1,75 @@
 <!DOCTYPE html>
 <html>
-
 <head>
-    <title>SuperNote Login</title>
+    <title>SuperNote Home</title>
 </head>
-
 <body>
-    <h1>Login to SuperNote</h1>
+    <h1>Welcome to SuperNote</h1>
 
-    <form id="login-form">
-        <label for="username">Username:</label>
-        <input type="text" id="username" name="username" required /><br><br>
+    <p id="welcome-message">Checking session...</p>
 
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required /><br><br>
+    <button id="login-btn">Login</button>
+    <button id="signup-btn">Signup</button>
+    <button id="logout-btn" style="display:none;">Logout</button>
 
-        <button type="submit">Login</button>
-
-    </form>
-    <button id="signup" type="signup">Signup</button>
-
-
-    <p id="login-status"></p>
     <script>
-        document.getElementById('login-form').addEventListener('submit', async function (e) {
-            e.preventDefault();
-
-            const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-
+        // ตรวจสอบ session
+        async function checkSession() {
             try {
-                const response = await fetch('http://localhost:5000/api/login', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ username, password })
+                const response = await fetch('http://localhost:5000/api/session', {
+                    method: 'GET',
+                    credentials: 'include'
                 });
 
                 const result = await response.json();
-                const statusElement = document.getElementById('login-status');
+                const message = document.getElementById('welcome-message');
+                const logoutBtn = document.getElementById('logout-btn');
+                const loginBtn = document.getElementById('login-btn');
+                const signupBtn = document.getElementById('signup-btn');
 
-                if (response.ok) {
-                    statusElement.innerText = 'Login successful! Welcome, ' + result.username;
-                    // redirect after login success
-                    // window.location.href = 'dashboard.html';
+                if (result.logged_in) {
+                    message.innerText = `Hello, ${result.username}!`;
+                    logoutBtn.style.display = 'inline-block';
+                    loginBtn.style.display = 'none';
+                    signupBtn.style.display = 'none';
                 } else {
-                    statusElement.innerText = 'Login failed: ' + result.error;
+                    message.innerText = 'You are not logged in.';
+                    logoutBtn.style.display = 'none';
+                    loginBtn.style.display = 'inline-block';
+                    signupBtn.style.display = 'inline-block';
                 }
-
             } catch (error) {
-                document.getElementById('login-status').innerText = 'Network error';
+                document.getElementById('welcome-message').innerText = 'Session check failed.';
+            }
+        }
+
+        // logout
+        document.getElementById('logout-btn').addEventListener('click', async function () {
+            try {
+                const response = await fetch('http://localhost:5000/api/logout', {
+                    method: 'POST',
+                    credentials: 'include'
+                });
+
+                const result = await response.json();
+                alert(result.message);
+                window.location.reload();
+            } catch (error) {
+                alert('Logout failed.');
             }
         });
 
-        document.getElementById('signup').addEventListener('click', function () {
-            window.location.href = 'signup.html'; // redirect to signup page
+        // redirect to login
+        document.getElementById('login-btn').addEventListener('click', function () {
+            window.location.href = 'login.html';
         });
+
+        // redirect to signup
+        document.getElementById('signup-btn').addEventListener('click', function () {
+            window.location.href = 'signup.html';
+        });
+
+        checkSession();
     </script>
-
 </body>
-
 </html>
