@@ -27,16 +27,27 @@ pip install -r requirements.txt
 Update the database configuration in `connect.py`:
 - Change the username and password to match your database settings
 
-## Running the Application
+## Quick Start
 
-Start the Flask development server:
-```bash
-python app.py
-
-python -m http.server 8000
+1. Activate virtual environment (Windows):
+```powershell
+.venv\Scripts\Activate.ps1
 ```
 
-The application will be available at `http://localhost:5000`
+2. Run backend (Terminal 1):
+```bash
+python app.py
+```
+Backend runs on: http://127.0.0.1:5000
+
+3. Run frontend (Terminal 2):
+```bash
+cd frontend
+python -m http.server 8000
+```
+Frontend runs on: http://localhost:8000
+
+To stop servers: Press Ctrl+C in each terminal
 
 ## Tech Stack
 
