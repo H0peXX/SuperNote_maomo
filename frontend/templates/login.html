@@ -3,28 +3,34 @@
 
 <head>
     <title>SuperNote Login</title>
-    <link rel="stylesheet" href="styles.css">
+    <link rel="stylesheet" href="/static/styles.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 </head>
 
 <body class="container">
-    <h1>Login to SuperNote</h1>
+    <div class="form-container animate-fade-in">
+        <h1>Welcome Back!</h1>
+        <p class="subtitle">Log in to access your notes and team spaces</p>
 
-    <form id="login-form">
-        <div class="form-group">
-            <label for="username">Username:</label>
-            <input type="text" id="username" name="username" required />
+        <form id="login-form">
+            <div class="form-group">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" required placeholder="Enter your username" />
+            </div>
+
+            <div class="form-group">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" required placeholder="Enter your password" />
+            </div>
+
+            <button type="submit" class="btn-primary">Sign In</button>
+        </form>
+
+        <div class="divider">
+            <span>New to SuperNote?</span>
         </div>
 
-        <div class="form-group">
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" required />
-        </div>
-
-        <button type="submit" class="btn-primary">Login</button>
-
-    </form>
-    <div class="button-group">
-        <button id="signup" type="signup" class="btn-secondary">Signup</button>
+        <button id="signup" type="button" class="btn-secondary">Create Account</button>
     </div>
 
     <p id="login-status" class="status-message"></p>
@@ -47,10 +53,16 @@
                 const result = await response.json();
                 const statusElement = document.getElementById('login-status');
 
+                console.log('Login response:', result);
                 if (response.ok) {
+                    // Store the token in localStorage
+                    localStorage.setItem('token', result.access_token);
+                    localStorage.setItem('username', result.username);
+                    console.log('Stored token:', result.access_token);
+                    
                     statusElement.innerText = 'Login successful! Welcome, ' + result.username;
-                    // redirect after login success
-                    // window.location.href = 'dashboard.html';
+                    // Redirect to main page after successful login
+                    window.location.href = 'main.html';
                 } else {
                     statusElement.innerText = 'Login failed: ' + result.error;
                 }

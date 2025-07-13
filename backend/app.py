@@ -4,7 +4,26 @@ from routes.user_route import user_bp
 from dotenv import load_dotenv
 
 app = Flask(__name__)
-CORS(app, origins=["http://localhost:8000"], supports_credentials=True)  # important
+CORS(app, 
+    resources={
+        r"/*": {
+            "origins": ["http://localhost:8000"],
+            "methods": ["GET", "POST", "OPTIONS"],
+            "allow_headers": [
+                "Content-Type",
+                "Authorization",
+                "Access-Control-Allow-Origin",
+                "Referer",
+                "User-Agent",
+                "sec-ch-ua",
+                "sec-ch-ua-mobile",
+                "sec-ch-ua-platform",
+                "Sec-Fetch-Mode"
+            ]
+        }
+    },
+    supports_credentials=True
+)  # important
 
 app.register_blueprint(user_bp)
 

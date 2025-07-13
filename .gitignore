@@ -13,3 +13,17 @@ __pycache__/
 .venv
 venv/
 ENV/
+
+# Logs
+logs/
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db

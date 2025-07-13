@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>SuperNote - Dashboard</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body class="container">
+    <header class="animate-fade-in">
+        <div class="header-content">
+            <h1>SuperNote</h1>
+            <div id="user-info">
+                <span class="user-greeting">
+                    <i class="fas fa-user-circle"></i>
+                    Welcome, <span id="username"></span>!
+                </span>
+                <button id="logout" class="btn-secondary">
+                    <i class="fas fa-sign-out-alt"></i>
+                    Logout
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <main class="animate-fade-in">
+        <div class="dashboard">
+            <h2><i class="fas fa-columns"></i> Your Dashboard</h2>
+            
+            <div class="quick-actions">
+                <button class="btn-primary">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>New Note</span>
+                </button>
+                <button class="btn-primary">
+                    <i class="fas fa-book"></i>
+                    <span>My Notes</span>
+                </button>
+                <button class="btn-primary">
+                    <i class="fas fa-users"></i>
+                    <span>Team Space</span>
+                </button>
+            </div>
+
+            <div class="card-grid">
+                <div class="card">
+                    <h3><i class="fas fa-clock"></i> Recent Notes</h3>
+                    <div class="note-list" id="recent-notes">
+                        <!-- Will be populated by JavaScript -->
+                        <p class="empty-state">No recent notes</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3><i class="fas fa-star"></i> Favorites</h3>
+                    <div class="note-list" id="favorite-notes">
+                        <!-- Will be populated by JavaScript -->
+                        <p class="empty-state">No favorite notes</p>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <h3><i class="fas fa-users"></i> Team Updates</h3>
+                    <div class="team-updates" id="team-updates">
+                        <!-- Will be populated by JavaScript -->
+                        <p class="empty-state">No team updates</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script>
+        // Check if user is logged in
+        window.onload = function() {
+            const token = localStorage.getItem('token');
+            const username = localStorage.getItem('username');
+            
+            if (!token || !username) {
+                // Redirect to login if not authenticated
+                window.location.href = 'login.html';
+                return;
+            }
+
+            // Display username
+            document.getElementById('username').textContent = username;
+
+            // Verify token with backend
+            fetch('http://localhost:5000/api/session', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (!data.logged_in) {
+                    // Token invalid, redirect to login
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('username');
+                    window.location.href = 'login.html';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                window.location.href = 'login.html';
+            });
+        };
+
+        // Handle logout
+        document.getElementById('logout').addEventListener('click', function() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('username');
+            window.location.href = 'login.html';
+        });
+    </script>
+</body>
+</html>
