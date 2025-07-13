@@ -3,25 +3,31 @@
 
 <head>
     <title>SuperNote Login</title>
+    <link rel="stylesheet" href="styles.css">
 </head>
 
-<body>
+<body class="container">
     <h1>Login to SuperNote</h1>
 
     <form id="login-form">
-        <label for="username">Username:</label>
-        <input type="text" id="username" name="username" required /><br><br>
+        <div class="form-group">
+            <label for="username">Username:</label>
+            <input type="text" id="username" name="username" required />
+        </div>
 
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" required /><br><br>
+        <div class="form-group">
+            <label for="password">Password:</label>
+            <input type="password" id="password" name="password" required />
+        </div>
 
-        <button type="submit">Login</button>
+        <button type="submit" class="btn-primary">Login</button>
 
     </form>
-    <button id="signup" type="signup">Signup</button>
+    <div class="button-group">
+        <button id="signup" type="signup" class="btn-secondary">Signup</button>
+    </div>
 
-
-    <p id="login-status"></p>
+    <p id="login-status" class="status-message"></p>
     <script>
         document.getElementById('login-form').addEventListener('submit', async function (e) {
             e.preventDefault();
