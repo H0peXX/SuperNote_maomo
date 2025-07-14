@@ -1,20 +1,44 @@
 from flask import Blueprint, jsonify, request
 from datetime import datetime
-from db.connect import user_collection
+from db.connect import *
 from flask_cors import CORS
 import bcrypt
 import jwt
+import os
+from flask_cors import cross_origin
 
 # JWT settings
-SECRET_KEY = "your-secret-key"  # Change this to a secure key in production
+SECRET_KEY = f"{os.getenv('SECRET_KEY')}"  # Change this to a secure key in production
 ALGORITHM = "HS256"
 
-user_bp = Blueprint('user', __name__)
 
-# Configure CORS for the blueprint
+# Create blueprints for user and team table routes
+user_bp = Blueprint('user', __name__)
+team_bp = Blueprint('team', __name__)
+
+
+
+# Configure CORS for the blueprints
 CORS(user_bp, resources={
     r"/api/*": {
-        "origins": ["http://localhost:8000"],
+        "origins": ["http://localhost:8000", "http://localhost:5000"],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": [
+            "Content-Type",
+            "Authorization",
+            "Access-Control-Allow-Origin",
+            "Referer",
+            "User-Agent",
+            "sec-ch-ua",
+            "sec-ch-ua-mobile",
+            "sec-ch-ua-platform",
+            "Sec-Fetch-Mode"
+        ]
+    }
+})
+CORS(team_bp, resources={
+    r"/api/*": {
+        "origins": ["http://localhost:8000", "http://localhost:5000"],
         "methods": ["GET", "POST", "OPTIONS"],
         "allow_headers": [
             "Content-Type",
@@ -143,3 +167,36 @@ def signup():
     user_collection.insert_one(new_user)
 
     return jsonify({'message': 'User created successfully', 'username': username}), 201
+
+# --- Create team route ---
+
+
+# --- Create team route ---
+@team_bp.route('/api/team', methods=['POST'])
+def create_team():
+    data = request.get_json()
+    team_name = data.get('team_name')
+    team_description = data.get('team_description')
+
+    if not team_name or not team_description:
+        return jsonify({'error': 'Team name and description are required'}), 400
+
+    new_team = {
+        'team_name': team_name,
+        'team_description': team_description,
+        'created_at': datetime.utcnow()
+    }
+
+    team_collection.insert_one(new_team)
+
+    return jsonify({
+        'message': 'Team created successfully',
+        'team_name': team_name,
+        'team_description': team_description
+    }), 201
+
+# --- Get all teams route ---
+@team_bp.route('/api/teams', methods=['GET'])
+def get_teams():
+    teams = list(team_collection.find({}, {'_id': 0, 'team_name': 1}))
+    return jsonify({'teams': teams})

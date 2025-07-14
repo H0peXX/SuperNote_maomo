@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Create Team - SuperNote</title>
+    <link rel="stylesheet" href="/static/styles.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body class="container">
+    <div class="form-container animate-fade-in">
+        <h1>Create a New Team</h1>
+        <p class="subtitle">Start collaborating with your team now!</p>
+
+        <form id="create-team-form">
+            <div class="form-group">
+                <label for="team-name">Team Name</label>
+                <input type="text" id="team-name" name="team_name" required placeholder="Enter team name" />
+            </div>
+
+            <div class="form-group">
+                <label for="team-description">Description</label>
+                <textarea id="team-description" name="team_description" required placeholder="Describe your team"></textarea>
+            </div>
+
+            <button type="submit" class="btn-primary">Create Team</button>
+        </form>
+
+        <div class="divider">
+            <span>Back to Dashboard?</span>
+        </div>
+
+        <button id="back-home" type="button" class="btn-secondary">Return to Home</button>
+    </div>
+
+    <p id="team-status" class="status-message"></p>
+
+    <script>
+        document.getElementById('create-team-form').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const team_name = document.getElementById('team-name').value;
+            const team_description = document.getElementById('team-description').value;
+            const statusElement = document.getElementById('team-status');
+
+            try {
+                const response = await fetch('http://localhost:5000/api/team', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + localStorage.getItem('token')
+                    },
+                    body: JSON.stringify({ team_name, team_description })
+                });
+
+                const result = await response.json();
+
+                console.log('Team creation response:', result);
+                if (response.ok) {
+                    statusElement.innerText = 'Team created successfully: ' + result.team_name;
+                    // Redirect if needed
+                    setTimeout(() => {
+                        window.location.href = 'main.html';
+                    }, 1500);
+                } else {
+                    statusElement.innerText = 'Create team failed: ' + (result.error || 'Unknown error');
+                }
+
+            } catch (error) {
+                statusElement.innerText = 'Network error';
+                console.error('Error creating team:', error);
+            }
+        });
+
+        document.getElementById('back-home').addEventListener('click', function () {
+            window.location.href = 'main.html'; 
+        });
+    </script>
+</body>
+
+</html>

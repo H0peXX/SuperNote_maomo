@@ -36,7 +36,7 @@
                     <i class="fas fa-book"></i>
                     <span>My Notes</span>
                 </button>
-                <button class="btn-primary">
+                <button id="createTeam"class="btn-primary">
                     <i class="fas fa-users"></i>
                     <span>Team Space</span>
                 </button>
@@ -75,16 +75,11 @@
         window.onload = function() {
             const token = localStorage.getItem('token');
             const username = localStorage.getItem('username');
-            
             if (!token || !username) {
-                // Redirect to login if not authenticated
                 window.location.href = 'login.html';
                 return;
             }
-
-            // Display username
             document.getElementById('username').textContent = username;
-
             // Verify token with backend
             fetch('http://localhost:5000/api/session', {
                 headers: {
@@ -94,7 +89,6 @@
             .then(response => response.json())
             .then(data => {
                 if (!data.logged_in) {
-                    // Token invalid, redirect to login
                     localStorage.removeItem('token');
                     localStorage.removeItem('username');
                     window.location.href = 'login.html';
@@ -104,6 +98,33 @@
                 console.error('Error:', error);
                 window.location.href = 'login.html';
             });
+
+            // Fetch and display team names
+            fetch('http://localhost:5000/api/teams', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const teamUpdatesDiv = document.getElementById('team-updates');
+                teamUpdatesDiv.innerHTML = '';
+                if (Array.isArray(data.teams) && data.teams.length > 0) {
+                    data.teams.forEach(team => {
+                        const p = document.createElement('p');
+                        p.textContent = team.team_name;
+                        teamUpdatesDiv.appendChild(p);
+                    });
+                } else {
+                    teamUpdatesDiv.innerHTML = '<p class="empty-state">No team updates</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching teams:', error);
+                document.getElementById('team-updates').innerHTML = '<p class="empty-state">No team updates</p>';
+            });
         };
 
         // Handle logout
@@ -111,6 +132,11 @@
             localStorage.removeItem('token');
             localStorage.removeItem('username');
             window.location.href = 'login.html';
+        });
+
+        // create team
+        document.getElementById('createTeam').addEventListener('click', function() {
+            window.location.href = 'create_team.html';
         });
     </script>
 </body>

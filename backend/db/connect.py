@@ -16,3 +16,4 @@ except Exception as e:
 
 mongo_db = client["maomo"]
 user_collection = mongo_db["users"]
+team_collection = mongo_db["teams"]

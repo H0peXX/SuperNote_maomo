@@ -1,13 +1,13 @@
 from flask import Flask
 from flask_cors import CORS
-from routes.user_route import user_bp
+from routes.user_route import user_bp, team_bp
 from dotenv import load_dotenv
 
 app = Flask(__name__)
 CORS(app, 
     resources={
         r"/*": {
-            "origins": ["http://localhost:8000"],
+            "origins": ["http://localhost:8000", "http://localhost:5000"],
             "methods": ["GET", "POST", "OPTIONS"],
             "allow_headers": [
                 "Content-Type",
@@ -26,6 +26,7 @@ CORS(app,
 )  # important
 
 app.register_blueprint(user_bp)
+app.register_blueprint(team_bp)
 
 load_dotenv()
 
