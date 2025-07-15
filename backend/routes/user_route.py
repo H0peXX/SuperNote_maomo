@@ -15,7 +15,7 @@ ALGORITHM = "HS256"
 # Create blueprints for user and team table routes
 user_bp = Blueprint('user', __name__)
 team_bp = Blueprint('team', __name__)
-
+member_bp = Blueprint('member', __name__)
 
 
 # Configure CORS for the blueprints
@@ -37,6 +37,23 @@ CORS(user_bp, resources={
     }
 })
 CORS(team_bp, resources={
+    r"/api/*": {
+        "origins": ["http://localhost:8000", "http://localhost:5000"],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": [
+            "Content-Type",
+            "Authorization",
+            "Access-Control-Allow-Origin",
+            "Referer",
+            "User-Agent",
+            "sec-ch-ua",
+            "sec-ch-ua-mobile",
+            "sec-ch-ua-platform",
+            "Sec-Fetch-Mode"
+        ]
+    }
+})
+CORS(member_bp, resources={
     r"/api/*": {
         "origins": ["http://localhost:8000", "http://localhost:5000"],
         "methods": ["GET", "POST", "OPTIONS"],
@@ -177,6 +194,7 @@ def create_team():
     data = request.get_json()
     team_name = data.get('team_name')
     team_description = data.get('team_description')
+    team_members = data.get('team_members', [])
 
     if not team_name or not team_description:
         return jsonify({'error': 'Team name and description are required'}), 400
@@ -187,16 +205,30 @@ def create_team():
         'created_at': datetime.utcnow()
     }
 
-    team_collection.insert_one(new_team)
+    # Insert the new team and get its _id
+    result = team_collection.insert_one(new_team)
+    team_id = str(result.inserted_id)
+
+    # Add each member to the member table with team_id and member_email
+    members_to_insert = []
+    for member_email in team_members:
+        members_to_insert.append({
+            'team_id': team_id,
+            'team_name': team_name,
+            'member_email': member_email
+        })
+    if members_to_insert:
+        member_collection.insert_many(members_to_insert)
 
     return jsonify({
         'message': 'Team created successfully',
+        'team_id': team_id,
         'team_name': team_name,
         'team_description': team_description
     }), 201
 
 # --- Get all teams route ---
-@team_bp.route('/api/teams', methods=['GET'])
+@team_bp.route('/api/teams', methods=['POST'])
 def get_teams():
     teams = list(team_collection.find({}, {'_id': 0, 'team_name': 1}))
     return jsonify({'teams': teams})

@@ -22,7 +22,9 @@
                 <label for="team-description">Description</label>
                 <textarea id="team-description" name="team_description" required placeholder="Describe your team"></textarea>
             </div>
-
+            <div class="form-group">
+                <label for="team-members">Add Members (optional)</label>
+                <input type="text" id="team-members" name="team_members" placeholder="Enter member emails, separated by commas" />
             <button type="submit" class="btn-primary">Create Team</button>
         </form>
 
@@ -42,6 +44,7 @@
             const team_name = document.getElementById('team-name').value;
             const team_description = document.getElementById('team-description').value;
             const statusElement = document.getElementById('team-status');
+            const team_members = document.getElementById('team-members').value.split(',').map(email => email.trim()).filter(email => email);
 
             try {
                 const response = await fetch('http://localhost:5000/api/team', {
@@ -50,7 +53,7 @@
                         'Content-Type': 'application/json',
                         'Authorization': 'Bearer ' + localStorage.getItem('token')
                     },
-                    body: JSON.stringify({ team_name, team_description })
+                    body: JSON.stringify({ team_name, team_description, team_members })
                 });
 
                 const result = await response.json();
