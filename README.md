@@ -1,3 +1,57 @@
+# SuperNote Maomo
+
+A text summarization application that uses Google's Gemini 2.5-flash model to generate concise summaries and stores them in MongoDB.
+
+## Features
+
+- Text summarization using Gemini 2.5-flash model
+- MongoDB integration for storing summaries
+- Clean and simple web interface
+- Datetime tracking for each summary
+
+## Data Structure
+
+Summaries are stored in MongoDB with the following format:
+```json
+{
+    "Header": "Summary Title",
+    "Topic": "Topic Category",
+    "Sum": "Generated Summary Text",
+    "Provider": "User Name",
+    "DateTime": "DD/MM/YYYY HH:MM:SS",
+    "LastUpdate": "DD/MM/YYYY HH:MM:SS"
+}
+```
+
+## Setup
+
+1. Create a virtual environment:
+   ```bash
+   python -m venv venv
+   .\venv\Scripts\activate  # Windows
+   source venv/bin/activate    # Linux/Mac
+   ```
+
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. Run the application:
+   ```bash
+   cd backend
+   python app.py
+   ```
+
+4. Access the application at http://127.0.0.1:5000
+
+## Technologies Used
+
+- Flask: Web framework
+- MongoDB: Database
+- Google Gemini: AI model for summarization
+- Python 3.x
+
 # SuperNote Application (maomo)
 
 A Flask-based note-taking application that allows users to create, manage, and organize their notes efficiently.
