@@ -15,7 +15,7 @@ notes_collection = db.notes
 
 # Gemini setup with 2.5-flash model
 genai.configure(api_key='AIzaSyDL-p6OrYr5fUKdGHmPCbdNImN4-v9BBcg')
-model = genai.GenerativeModel('gemini-pro')  # Using Gemini Pro model
+model = genai.GenerativeModel('gemini-2.5-flash')  # Using Gemini 2.5-flash for faster responses
 
 @app.route('/')
 def index():
