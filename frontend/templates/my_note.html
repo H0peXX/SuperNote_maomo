@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Notes</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+    <div class="container">
+        <h1>My Notes</h1>
+        <button id="fetch-my-notes" class="btn-primary">Fetch My Notes</button>
+        <div style="margin: 20px 0 10px 0;">
+            <input type="text" id="note-header-input" placeholder="Enter Header (e.g. Dog Food)" style="padding:4px;" />
+            <button id="fetch-note-btn" class="btn-primary" style="padding:4px 10px;">Fetch Note</button>
+        </div>
+        <ul id="my-notes-list"></ul>
+        <ul id="notes-list"></ul>
+    </div>
+    <script>
+        document.getElementById('fetch-my-notes').addEventListener('click', async function() {
+            const notesList = document.getElementById('my-notes-list');
+            notesList.innerHTML = '<li>Loading...</li>';
+            const token = localStorage.getItem('token');
+            if (!token) {
+                notesList.innerHTML = '<li>Please log in first.</li>';
+                return;
+            }
+            try {
+                const response = await fetch('http://localhost:5000/api/notes', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': 'Bearer ' + token
+                    }
+                });
+                const data = await response.json();
+                notesList.innerHTML = '';
+                if (Array.isArray(data.notes) && data.notes.length > 0) {
+                    data.notes.forEach(note => {
+                        const li = document.createElement('li');
+                        li.innerHTML = `<b>Header:</b> ${note.Header || ''}<br><b>Topic:</b> ${note.Topic || ''}<br><b>Sum:</b> ${note.Sum || ''}<br><b>Provider:</b> ${note.Provider || ''}<br><b>DateTime:</b> ${note.DateTime || ''}<br><b>LastUpdate:</b> ${note.LastUpdate || ''}`;
+                        notesList.appendChild(li);
+                    });
+                } else {
+                    notesList.innerHTML = '<li>No notes found.</li>';
+                }
+            } catch (error) {
+                notesList.innerHTML = '<li>Failed to load notes.</li>';
+            }
+        });
+
+        // Fetch note by Header using POST /api/note
+        document.addEventListener('DOMContentLoaded', function() {
+            const fetchBtn = document.getElementById('fetch-note-btn');
+            if (fetchBtn) {
+                fetchBtn.addEventListener('click', function() {
+                    const header = document.getElementById('note-header-input').value.trim();
+                    if (header) {
+                        fetchNoteByHeader(header);
+                    } else {
+                        alert('Please enter a Header to search.');
+                    }
+                });
+            }
+        });
+
+        async function fetchNoteByHeader(header) {
+            const notesList = document.getElementById('notes-list');
+            notesList.innerHTML = '<li>Loading...</li>';
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('http://localhost:5000/api/note', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': token ? 'Bearer ' + token : ''
+                    },
+                    body: JSON.stringify({ Header: header })
+                });
+                const note = await response.json();
+                notesList.innerHTML = '';
+                if (note && !note.error) {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<b>Header:</b> ${note.Header || ''}<br><b>Topic:</b> ${note.Topic || ''}<br><b>Sum:</b> ${note.Sum || ''}<br><b>Provider:</b> ${note.Provider || ''}<br><b>DateTime:</b> ${note.DateTime || ''}<br><b>LastUpdate:</b> ${note.LastUpdate || ''}`;
+                    notesList.appendChild(li);
+                } else {
+                    notesList.innerHTML = `<li>${note.error ? note.error : 'No note found.'}</li>`;
+                }
+            } catch (error) {
+                notesList.innerHTML = '<li>Failed to load note.</li>';
+            }
+        }
+    </script>
+</body>
+</html>

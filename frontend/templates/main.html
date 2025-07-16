@@ -32,7 +32,7 @@
                     <i class="fas fa-plus-circle"></i>
                     <span>New Note</span>
                 </button>
-                <button class="btn-primary">
+                <button id="myNotesBtn" class="btn-primary">
                     <i class="fas fa-book"></i>
                     <span>My Notes</span>
                 </button>
@@ -160,20 +160,7 @@
             }
         }
 
-        // Add event for fetch note button
-        document.addEventListener('DOMContentLoaded', function() {
-            const fetchBtn = document.getElementById('fetch-note-btn');
-            if (fetchBtn) {
-                fetchBtn.addEventListener('click', function() {
-                    const header = document.getElementById('note-header-input').value.trim();
-                    if (header) {
-                        fetchNoteByHeader(header);
-                    } else {
-                        alert('Please enter a Header to search.');
-                    }
-                });
-            }
-        });
+        // ...removed fetch-note-btn event logic, moved to my_note.html...
 
         // Handle logout
         document.getElementById('logout').addEventListener('click', function() {
@@ -185,6 +172,11 @@
         // create team
         document.getElementById('createTeam').addEventListener('click', function() {
             window.location.href = 'create_team.html';
+        });
+
+        // my notes
+        document.getElementById('myNotesBtn').addEventListener('click', function() {
+            window.location.href = 'my_note.html';
         });
 
         
