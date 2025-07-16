@@ -53,7 +53,7 @@
                         'Content-Type': 'application/json',
                         'Authorization': 'Bearer ' + localStorage.getItem('token')
                     },
-                    body: JSON.stringify({ team_name, team_description, team_members })
+                    body: JSON.stringify({ team_name, team_description })
                 });
 
                 const result = await response.json();

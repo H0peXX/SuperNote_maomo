@@ -12,10 +12,12 @@ SECRET_KEY = f"{os.getenv('SECRET_KEY')}"  # Change this to a secure key in prod
 ALGORITHM = "HS256"
 
 
-# Create blueprints for user and team table routes
+
+# Create blueprints for user, team, member, and note table routes
 user_bp = Blueprint('user', __name__)
 team_bp = Blueprint('team', __name__)
 member_bp = Blueprint('member', __name__)
+note_bp = Blueprint('note', __name__)
 
 
 # Configure CORS for the blueprints
@@ -186,9 +188,6 @@ def signup():
     return jsonify({'message': 'User created successfully', 'username': username}), 201
 
 # --- Create team route ---
-
-
-# --- Create team route ---
 @team_bp.route('/api/team', methods=['POST'])
 def create_team():
     data = request.get_json()
@@ -205,30 +204,35 @@ def create_team():
         'created_at': datetime.utcnow()
     }
 
-    # Insert the new team and get its _id
-    result = team_collection.insert_one(new_team)
-    team_id = str(result.inserted_id)
-
-    # Add each member to the member table with team_id and member_email
-    members_to_insert = []
-    for member_email in team_members:
-        members_to_insert.append({
-            'team_id': team_id,
-            'team_name': team_name,
-            'member_email': member_email
-        })
-    if members_to_insert:
-        member_collection.insert_many(members_to_insert)
+    team_collection.insert_one(new_team)
+    member_collection.insert_many([
+        {'team_name': team_name, 'member_email': team_members} 
+    ])
 
     return jsonify({
         'message': 'Team created successfully',
-        'team_id': team_id,
         'team_name': team_name,
         'team_description': team_description
     }), 201
 
-# --- Get all teams route ---
-@team_bp.route('/api/teams', methods=['POST'])
+
+# --- Get all teams route (GET) ---
+@team_bp.route('/api/teams', methods=['GET'])
 def get_teams():
     teams = list(team_collection.find({}, {'_id': 0, 'team_name': 1}))
     return jsonify({'teams': teams})
+
+# --- Get note by header (POST) ---
+@note_bp.route('/api/note', methods=['POST'])
+def get_note():
+    data = request.get_json()
+    header = data.get('Header')
+    if not header:
+        return jsonify({'error': 'Header is required'}), 400
+    note = note_collection.find_one({'Header': header}, {'_id': 0})
+    if note:
+        return jsonify(note)
+    else:
+        return jsonify({'error': 'Note not found'}), 404
+
+

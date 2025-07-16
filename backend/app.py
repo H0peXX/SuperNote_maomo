@@ -1,6 +1,6 @@
 from flask import Flask
 from flask_cors import CORS
-from routes.user_route import user_bp, team_bp
+from routes.user_route import *
 from dotenv import load_dotenv
 
 app = Flask(__name__)
@@ -27,6 +27,9 @@ CORS(app,
 
 app.register_blueprint(user_bp)
 app.register_blueprint(team_bp)
+app.register_blueprint(member_bp)
+app.register_blueprint(note_bp)
+
 
 load_dotenv()
 

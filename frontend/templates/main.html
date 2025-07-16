@@ -42,6 +42,11 @@
                 </button>
             </div>
 
+            <div style="margin: 20px 0 10px 0;">
+                <input type="text" id="note-header-input" placeholder="Enter Header (e.g. Dog Food)" style="padding:4px;" />
+                <button id="fetch-note-btn" class="btn-primary" style="padding:4px 10px;">Fetch Note</button>
+            </div>
+            <ul id="notes-list"></ul>
             <div class="card-grid">
                 <div class="card">
                     <h3><i class="fas fa-clock"></i> Recent Notes</h3>
@@ -103,8 +108,7 @@
             fetch('http://localhost:5000/api/teams', {
                 method: 'GET',
                 headers: {
-                    'Authorization': `Bearer ${token}`,
-                    'Content-Type': 'application/json'
+                    'Authorization': `Bearer ${token}`
                 }
             })
             .then(response => response.json())
@@ -127,6 +131,50 @@
             });
         };
 
+
+        // Fetch note by Header using POST /api/note
+        async function fetchNoteByHeader(header) {
+            const notesList = document.getElementById('notes-list');
+            notesList.innerHTML = '<li>Loading...</li>';
+            try {
+                const token = localStorage.getItem('token');
+                const response = await fetch('http://localhost:5000/api/note', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': token ? 'Bearer ' + token : ''
+                    },
+                    body: JSON.stringify({ Header: header })
+                });
+                const note = await response.json();
+                notesList.innerHTML = '';
+                if (note && !note.error) {
+                    const li = document.createElement('li');
+                    li.innerHTML = `<b>Header:</b> ${note.Header || ''}<br><b>Topic:</b> ${note.Topic || ''}<br><b>Sum:</b> ${note.Sum || ''}<br><b>Provider:</b> ${note.Provider || ''}<br><b>DateTime:</b> ${note.DateTime || ''}<br><b>LastUpdate:</b> ${note.LastUpdate || ''}`;
+                    notesList.appendChild(li);
+                } else {
+                    notesList.innerHTML = `<li>${note.error ? note.error : 'No note found.'}</li>`;
+                }
+            } catch (error) {
+                notesList.innerHTML = '<li>Failed to load note.</li>';
+            }
+        }
+
+        // Add event for fetch note button
+        document.addEventListener('DOMContentLoaded', function() {
+            const fetchBtn = document.getElementById('fetch-note-btn');
+            if (fetchBtn) {
+                fetchBtn.addEventListener('click', function() {
+                    const header = document.getElementById('note-header-input').value.trim();
+                    if (header) {
+                        fetchNoteByHeader(header);
+                    } else {
+                        alert('Please enter a Header to search.');
+                    }
+                });
+            }
+        });
+
         // Handle logout
         document.getElementById('logout').addEventListener('click', function() {
             localStorage.removeItem('token');
@@ -138,6 +186,8 @@
         document.getElementById('createTeam').addEventListener('click', function() {
             window.location.href = 'create_team.html';
         });
+
+        
     </script>
 </body>
 </html>
