@@ -43,7 +43,7 @@ def save():
         header = request.form.get('header')
         topic = request.form.get('topic')
         provider = request.form.get('provider')
-        current_date = datetime.now().strftime('%d/%m/%Y')
+        current_date = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
         
         # Create document
         note = {
