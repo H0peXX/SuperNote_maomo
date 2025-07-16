@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text Summarization</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        textarea {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            min-height: 200px;
+            resize: vertical;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .summary-section {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+            border: 1px solid #ddd;
+        }
+        .message {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .error {
+            background-color: #ffebee;
+            color: #c62828;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        .success {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Text Summarization</h1>
+
+        {% if error %}
+        <div class="error">{{ error }}</div>
+        {% endif %}
+
+        {% if message %}
+        <div class="success">{{ message }}</div>
+        {% endif %}
+
+        <!-- Text Input Form -->
+        <form action="/summarize" method="post">
+            <div class="form-group">
+                <label for="text">Enter text to summarize:</label>
+                <textarea id="text" name="text" required placeholder="Paste your text here..."></textarea>
+            </div>
+            <button type="submit">Generate Summary</button>
+        </form>
+
+        {% if summary %}
+        <div class="summary-section">
+            <h2>Generated Summary:</h2>
+            <p>{{ summary }}</p>
+            
+            <form action="/save" method="post">
+                <input type="hidden" name="summary" value="{{ summary }}">
+                
+                <div class="form-group">
+                    <label for="header">Header:</label>
+                    <input type="text" id="header" name="header" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="topic">Topic:</label>
+                    <input type="text" id="topic" name="topic" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="provider">Provider:</label>
+                    <input type="text" id="provider" name="provider" required>
+                </div>
+                
+                <button type="submit">Save to Database</button>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
