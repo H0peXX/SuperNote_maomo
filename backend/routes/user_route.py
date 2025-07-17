@@ -223,7 +223,7 @@ def get_teams():
     return jsonify({'teams': teams})
 
 # --- Get note by header (POST) ---
-@note_bp.route('/api/note', methods=['POST'])
+@note_bp.route('/api/note', methods=['POST']) 
 def get_note():
     data = request.get_json()
     header = data.get('Header')
