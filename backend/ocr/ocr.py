@@ -1,7 +1,10 @@
-import sys
 import os
-# import subprocess
-sys.path.append('/Users/kulisara/SuperNote_maomo/backend/ocr/typhoon_ocr') #เปลี่ยนด้วย
+import base64
+from io import BytesIO
+from PIL import Image
+from openai import OpenAI
+from PyPDF2 import PdfReader
+
 from typhoon_ocr.ocr_utils import render_pdf_to_base64png, get_anchor_text
 
 def get_prompt(prompt_name):
@@ -23,12 +26,6 @@ def get_prompt(prompt_name):
         ),
     }
     return PROMPTS.get(prompt_name, lambda x: "Invalid PROMPT_NAME provided.")
-
-import base64
-from io import BytesIO
-from PIL import Image
-from openai import OpenAI
-from PyPDF2 import PdfReader
 
 # --- CONFIG ---
 #แก้filename
