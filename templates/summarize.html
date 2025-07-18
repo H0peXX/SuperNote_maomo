@@ -106,25 +106,20 @@
         <div class="summary-section">
             <h2>Generated Summary:</h2>
             <p>{{ summary }}</p>
-            
             <form action="/save" method="post">
                 <input type="hidden" name="summary" value="{{ summary }}">
-                
                 <div class="form-group">
                     <label for="header">Header:</label>
                     <input type="text" id="header" name="header" required>
                 </div>
-                
                 <div class="form-group">
                     <label for="topic">Topic:</label>
                     <input type="text" id="topic" name="topic" required>
                 </div>
-                
                 <div class="form-group">
                     <label for="provider">Provider:</label>
                     <input type="text" id="provider" name="provider" required>
                 </div>
-                
                 <button type="submit">Save to Database</button>
             </form>
         </div>

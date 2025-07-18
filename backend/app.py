@@ -1,21 +1,26 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
+from flask_cors import CORS
 from pymongo.mongo_client import MongoClient
 from pymongo.server_api import ServerApi
 import google.generativeai as genai
 from datetime import datetime
 
+
 app = Flask(__name__, template_folder='../frontend/templates')
 app.secret_key = 'your-secret-key'  # Required for flash messages
+CORS(app)
 
-# MongoDB setup
-uri = "mongodb+srv://VanijTarnakij:admin@cluster0.qcym40v.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-client = MongoClient(uri, server_api=ServerApi('1'))
-db = client.maomo
-notes_collection = db.notes
+# MongoDB setup is now handled in db/connect.py
+from db.connect import note_collection
+
 
 # Gemini setup with 2.5-flash model
 genai.configure(api_key='AIzaSyDL-p6OrYr5fUKdGHmPCbdNImN4-v9BBcg')
 model = genai.GenerativeModel('gemini-2.5-flash')  # Using Gemini 2.5-flash for faster responses
+
+# Register blueprints for API routes
+from routes.user_route import user_bp
+app.register_blueprint(user_bp)
 
 @app.route('/')
 def index():

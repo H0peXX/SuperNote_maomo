@@ -8,3 +8,4 @@ jwt
 pymongo
 bcrypt
 PyJWT
+google-generativeai

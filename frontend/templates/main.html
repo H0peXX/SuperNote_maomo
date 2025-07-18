@@ -28,7 +28,7 @@
             <h2><i class="fas fa-columns"></i> Your Dashboard</h2>
             
             <div class="quick-actions">
-                <button class="btn-primary">
+                <button id="newNoteBtn" class="btn-primary">
                     <i class="fas fa-plus-circle"></i>
                     <span>New Note</span>
                 </button>
@@ -161,6 +161,12 @@
         }
 
         // ...removed fetch-note-btn event logic, moved to my_note.html...
+
+
+        // New Note button navigates to summarize.html
+        document.getElementById('newNoteBtn').addEventListener('click', function() {
+            window.location.href = 'summarize.html';
+        });
 
         // Handle logout
         document.getElementById('logout').addEventListener('click', function() {
