@@ -1,4 +1,4 @@
-from flask import Blueprint, jsonify, request
+from flask import Blueprint, jsonify, request, render_template
 from datetime import datetime
 from db.connect import *
 from flask_cors import CORS
@@ -6,6 +6,14 @@ import bcrypt
 import jwt
 import os
 from flask_cors import cross_origin
+import google.generativeai as genai
+from dotenv import load_dotenv
+load_dotenv()
+
+# Gemini setup with 2.5-flash model
+genai.configure(api_key="{os.getenv('GENAI_API_KEY')}")
+model = genai.GenerativeModel('gemini-2.5-flash')  # Using Gemini 2.5-flash for faster responses
+
 
 # JWT settings
 SECRET_KEY = f"{os.getenv('SECRET_KEY')}"  # Change this to a secure key in production
@@ -73,6 +81,24 @@ CORS(member_bp, resources={
     }
 })
 
+CORS(note_bp, resources={
+    r"/api/*": {
+        "origins": ["http://localhost:8000", "http://localhost:5000"],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": [
+            "Content-Type",
+            "Authorization",
+            "Access-Control-Allow-Origin",
+            "Referer",
+            "User-Agent",
+            "sec-ch-ua",
+            "sec-ch-ua-mobile",
+            "sec-ch-ua-platform",
+            "Sec-Fetch-Mode"
+        ]
+    }
+})
+
 # --- Get session status ---
 @user_bp.route('/api/session', methods=['GET'])
 def check_session():
@@ -92,6 +118,7 @@ def check_session():
         pass
     
     return jsonify({'logged_in': False})
+
 
 # --- Get first user (for test/demo) ---
 @user_bp.route('/api/user', methods=['GET'])
@@ -130,6 +157,7 @@ def login():
         })
     else:
         return jsonify({'error': 'Invalid credentials'}), 401
+
 
 
 # --- Signup route ---
@@ -187,6 +215,7 @@ def signup():
 
     return jsonify({'message': 'User created successfully', 'username': username}), 201
 
+
 # --- Create team route ---
 @team_bp.route('/api/team', methods=['POST'])
 def create_team():
@@ -216,11 +245,13 @@ def create_team():
     }), 201
 
 
+
 # --- Get all teams route (GET) ---
 @team_bp.route('/api/teams', methods=['GET'])
 def get_teams():
     teams = list(team_collection.find({}, {'_id': 0, 'team_name': 1}))
     return jsonify({'teams': teams})
+
 
 # --- Get note by header (POST) ---
 @note_bp.route('/api/note', methods=['POST'])
@@ -236,3 +267,46 @@ def get_note():
         return jsonify({'error': 'Note not found'}), 404
 
 
+
+# --- Summarize text route ---
+
+@user_bp.route('/summarize', methods=['POST'])
+def summarize():
+    try:
+        text = request.form.get('text')
+        if not text:
+            return render_template('summarize.html', error="Please enter some text to summarize.")
+        
+        # Generate summary using Gemini
+        response = model.generate_content(f"Please summarize the following text in a clear and concise way, maintaining the key points: {text}")
+        summary = response.text
+        
+        return render_template('summarize.html', summary=summary)
+    except Exception as e:
+        return render_template('summarize.html', error=f"Error generating summary: {str(e)}")
+
+@user_bp.route('/save', methods=['POST'])
+def save():
+    try:
+        summary = request.form.get('summary')
+        header = request.form.get('header')
+        topic = request.form.get('topic')
+        provider = request.form.get('provider')
+        current_date = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+        
+        # Create document
+        note = {
+            "Header": header,
+            "Topic": topic,
+            "Sum": summary,
+            "Provider": provider,
+            "DateTime": current_date,
+            "LastUpdate": current_date
+        }
+        
+        # Save to MongoDB
+        note_collection.insert_one(note)
+        
+        return render_template('summarize.html', message="Summary saved successfully!")
+    except Exception as e:
+        return render_template('summarize.html', error=f"Error saving to database: {str(e)}")
