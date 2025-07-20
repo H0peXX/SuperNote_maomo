@@ -43,8 +43,7 @@
             </div>
 
             <div style="margin: 20px 0 10px 0;">
-                <input type="text" id="note-header-input" placeholder="Enter Header (e.g. Dog Food)" style="padding:4px;" />
-                <button id="fetch-note-btn" class="btn-primary" style="padding:4px 10px;">Fetch Note</button>
+                <button id="fetch-note-btn" class="btn-primary" style="padding:4px 10px;">Mix Note</button>
             </div>
             <ul id="notes-list"></ul>
             <div class="card-grid">
@@ -160,8 +159,11 @@
             }
         }
 
-        // ...removed fetch-note-btn event logic, moved to my_note.html...
-
+        // Handle supernote 
+        document.getElementById('fetch-note-btn').addEventListener('click', function(e) {
+                    e.preventDefault();
+                    window.location.href = 'supernote.html';
+                });
 
         // New Note button navigates to summarize.html
         document.getElementById('newNoteBtn').addEventListener('click', function() {
