@@ -1,3 +1,4 @@
+from bson import ObjectId
 from flask import Blueprint, jsonify, request, render_template
 from datetime import datetime
 from db.connect import *
@@ -34,7 +35,7 @@ user_bp = Blueprint('user', __name__)
 team_bp = Blueprint('team', __name__)
 member_bp = Blueprint('member', __name__)
 note_bp = Blueprint('note', __name__)
-
+super_note_bp = Blueprint('super_note', __name__)
 
 # Configure CORS for the blueprints
 CORS(user_bp, resources={
@@ -90,6 +91,23 @@ CORS(member_bp, resources={
 })
 
 CORS(note_bp, resources={
+    r"/api/*": {
+        "origins": ["http://localhost:8000", "http://localhost:5000"],
+        "methods": ["GET", "POST", "OPTIONS"],
+        "allow_headers": [
+            "Content-Type",
+            "Authorization",
+            "Access-Control-Allow-Origin",
+            "Referer",
+            "User-Agent",
+            "sec-ch-ua",
+            "sec-ch-ua-mobile",
+            "sec-ch-ua-platform",
+            "Sec-Fetch-Mode"
+        ]
+    }
+})
+CORS(super_note_bp, resources={
     r"/api/*": {
         "origins": ["http://localhost:8000", "http://localhost:5000"],
         "methods": ["GET", "POST", "OPTIONS"],
@@ -261,23 +279,11 @@ def get_teams():
     return jsonify({'teams': teams})
 
 
-# --- Get note by header (POST) ---
-@note_bp.route('/api/note', methods=['POST'])
-def get_note():
-    data = request.get_json()
-    header = data.get('Header')
-    if not header:
-        return jsonify({'error': 'Header is required'}), 400
-    note = note_collection.find_one({'Header': header}, {'_id': 0})
-    if note:
-        return jsonify(note)
-    else:
-        return jsonify({'error': 'Note not found'}), 404
 
 
 
-# --- Summarize text route ---
-@user_bp.route('/summarize', methods=['GET', 'POST'])
+# --- Summarize text input ---
+@note_bp.route('/summarize', methods=['GET', 'POST'])
 def summarize():
     if request.method == 'GET':
         return render_template('summarize.html')
@@ -291,8 +297,11 @@ def summarize():
         return render_template('summarize.html', summary=summary)
     except Exception as e:
         return render_template('summarize.html', error=f"Error generating summary: {str(e)}")
+    
 
-@user_bp.route('/save', methods=['POST'])
+
+# --- Save summary input ---
+@note_bp.route('/save', methods=['POST'])
 def save():
     try:
         summary = request.form.get('summary')
@@ -312,8 +321,114 @@ def save():
         }
         
         # Save to MongoDB
-        note_collection.insert_one(note)
-        
-        return render_template('summarize.html', message="Summary saved successfully!")
+        result = note_collection.insert_one(note)
+        # Return JSON for frontend
+        note["_id"] = str(result.inserted_id)
+        return jsonify({"message": "Summary saved successfully!", "note": mongo_to_json(note)})
     except Exception as e:
-        return render_template('summarize.html', error=f"Error saving to database: {str(e)}")
+        return jsonify({"error": f"Error saving to database: {str(e)}"}), 500
+    
+
+# --- Get note by header (POST) ---
+@note_bp.route('/api/note', methods=['POST'])
+def get_note():
+    data = request.get_json()
+    header = data.get('Header')
+    if not header:
+        return jsonify({'error': 'Header is required'}), 400
+    note = note_collection.find_one({'Header': header})
+    if note:
+        return jsonify(mongo_to_json(note))
+    else:
+        return jsonify({'error': 'Note not found'}), 404
+
+
+# --- Get all note headers,Topic (for dropdown) ---
+@note_bp.route('/api/headers', methods=['GET'])
+def get_headers():
+    topics = note_collection.distinct('Topic')
+    return jsonify({'headers': topics})
+
+@note_bp.route('/api/notes_by_topic', methods=['POST'])
+@cross_origin()
+def notes_by_topic():
+    data = request.get_json()
+    topic = data.get('Topic')
+    if not topic:
+        return jsonify({'error': 'Topic is required'}), 400
+    notes = list(note_collection.find({'Topic': topic}))
+    return jsonify({'notes': mongo_to_json(notes)})
+
+
+
+
+# --- Summarize text route ---
+@super_note_bp.route('/api/supernote', methods=['POST'])
+@cross_origin()
+def make_supernote():
+    try:
+        data = request.get_json()
+        notes = data.get('notes', [])
+        if not notes or not isinstance(notes, list):
+            return jsonify({'error': 'No notes provided'}), 400
+        # Combine all Sum fields
+        combined_sum = ' '.join([n.get('Sum', '') for n in notes])
+        combined_header = ', '.join([n.get('Header', '') for n in notes])
+        combined_topic = notes[0].get('Topic', '') if notes else ''
+        combined_provider = ', '.join([n.get('Provider', '') for n in notes])
+        # Summarize and correct with Gemini
+        prompt = f"Summarize and correct the following combined notes for topic '{combined_topic}': {combined_sum}"
+        response = model.generate_content(prompt)
+        supernote_sum = response.text
+        current_date = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+        supernote_doc = {
+            "Header": combined_header,
+            "Topic": combined_topic,
+            "Sum": supernote_sum,
+            "Provider": combined_provider,
+            "DateTime": current_date,
+            "LastUpdate": current_date
+        }
+        # Insert and get inserted_id
+        result = super_note_collection.insert_one(supernote_doc)
+        # Do not return ObjectId in response (not JSON serializable)
+        supernote_doc["_id"] = str(result.inserted_id)
+        return jsonify({"supernote": mongo_to_json(supernote_doc)})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
+
+
+# --- Get all supernotes route ---
+@super_note_bp.route('/api/supernotes', methods=['GET'])
+@cross_origin()
+def get_supernotes():
+    try:
+        supernotes = list(super_note_collection.find({}))
+        return jsonify({"supernotes": mongo_to_json(supernotes)})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+def mongo_to_json(doc):
+    if isinstance(doc, list):
+        return [mongo_to_json(d) for d in doc]
+    if '_id' in doc:
+        doc['_id'] = str(doc['_id'])
+    return doc
+
+# --- Delete supernote by id ---
+@super_note_bp.route('/api/supernote/<id>', methods=['DELETE'])
+@cross_origin()
+def delete_supernote(id):
+    try:
+        result = super_note_collection.delete_one({'_id': ObjectId(id)})
+        if result.deleted_count == 1:
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'error': 'Supernote not found'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+
+
+

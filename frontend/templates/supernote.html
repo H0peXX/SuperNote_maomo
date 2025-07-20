@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+
+<body>
+    <div class="container"
+        style="max-width:600px;margin:40px auto;padding:30px;background:#fff;border-radius:8px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+        <h2 style="margin-bottom:20px;">Select Note by Topic</h2>
+        <div class="form-group">
+            <label for="topicSelect">Topic:</label>
+            <select id="topicSelect" style="width:100%;padding:8px;border-radius:4px;border:1px solid #ddd;"></select>
+        </div>
+        <button id="fetchNoteBtn"
+            style="margin:10px 0 20px 0;padding:10px 20px;background:#4CAF50;color:#fff;border:none;border-radius:4px;cursor:pointer;">Show
+            Note</button>
+        <div id="noteDetail" style="margin-top:20px;"></div>
+        <button id="makeSuperNoteBtn"
+            style="display:none;margin:10px 0 20px 0;padding:10px 20px;background:#2196F3;color:#fff;border:none;border-radius:4px;cursor:pointer;">Make
+            SuperNote</button>
+        <div id="superNoteResult" style="margin-top:20px;"></div>
+        <div class="form-group">
+            <label for="supernoteTopicSelect">SuperNote Topic:</label>
+            <select id="supernoteTopicSelect"
+                style="width:100%;padding:8px;border-radius:4px;border:1px solid #FF9800;margin-bottom:10px;"></select>
+        </div>
+        <button id="showSuperNotesBtn"
+            style="margin:10px 0 20px 0;padding:10px 20px;background:#FF9800;color:#fff;border:none;border-radius:4px;cursor:pointer;">Show
+            All SuperNotes</button>
+        <div id="allSuperNotes" style="margin-top:20px;"></div>
+        <button id="back-home" type="button" class="btn-secondary">Return to Home</button>
+
+    </div>
+
+    <script>
+
+        document.getElementById('back-home').addEventListener('click', function () {
+            window.location.href = 'main.html';
+        });
+
+        // Fetch all topics from backend
+        async function loadTopics() {
+            try {
+                const res = await fetch('http://localhost:5000/api/headers');
+                const data = await res.json();
+                const select = document.getElementById('topicSelect');
+                select.innerHTML = '';
+                if (Array.isArray(data.headers)) {
+                    data.headers.forEach(topic => {
+                        const option = document.createElement('option');
+                        option.value = topic;
+                        option.textContent = topic;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (err) {
+                alert('Failed to load topics');
+            }
+        }
+
+        // Load topics for supernote selection
+        async function loadSupernoteTopics() {
+            try {
+                const res = await fetch('http://localhost:5000/api/supernotes', {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const result = await res.json();
+                const select = document.getElementById('supernoteTopicSelect');
+                select.innerHTML = '';
+                if (result.supernotes && Array.isArray(result.supernotes)) {
+                    // Get unique topics
+                    const topics = [...new Set(result.supernotes.map(sn => sn.Topic))];
+                    topics.forEach(topic => {
+                        const option = document.createElement('option');
+                        option.value = topic;
+                        option.textContent = topic;
+                        select.appendChild(option);
+                    });
+                }
+            } catch (err) {
+                // fallback
+            }
+        }
+
+        // Fetch note by selected topic
+        async function fetchNote() {
+            const topic = document.getElementById('topicSelect').value;
+            const noteDetail = document.getElementById('noteDetail');
+            const makeSuperNoteBtn = document.getElementById('makeSuperNoteBtn');
+            noteDetail.innerHTML = 'Loading...';
+            makeSuperNoteBtn.style.display = 'none';
+            document.getElementById('superNoteResult').innerHTML = '';
+            try {
+                const res = await fetch('http://localhost:5000/api/notes_by_topic', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ Topic: topic })
+                });
+                const result = await res.json();
+                if (result && Array.isArray(result.notes) && result.notes.length > 0) {
+                    noteDetail.innerHTML = result.notes.map((note, idx) => `
+                        <div style='padding:15px;background:#f9f9f9;border-radius:4px;border:1px solid #ddd;margin-bottom:15px;'>
+                            <input type='checkbox' class='note-checkbox' value='${idx}' style='margin-right:8px;'>
+                            <b>Header:</b> ${note.Header || ''}<br>
+                            <b>Topic:</b> ${note.Topic || ''}<br>
+                            <b>Sum:</b> ${note.Sum || ''}<br>
+                            <b>Provider:</b> ${note.Provider || ''}<br>
+                            <b>DateTime:</b> ${note.DateTime || ''}<br>
+                            <b>LastUpdate:</b> ${note.LastUpdate || ''}
+                        </div>
+                    `).join('');
+                    makeSuperNoteBtn.style.display = 'inline-block';
+                    // Save notes data for supernote
+                    window._supernoteNotes = result.notes;
+                } else {
+                    noteDetail.innerHTML = `<div style='color:#c62828;'>${result.error || 'No notes found for this topic.'}</div>`;
+                }
+            } catch (err) {
+                noteDetail.innerHTML = '<div style="color:#c62828;">Failed to fetch notes.</div>';
+            }
+        }
+
+        // Make supernote from selected notes and send to backend for Gemini summarization
+        async function makeSuperNote() {
+            const checkboxes = document.querySelectorAll('.note-checkbox');
+            const selectedIdx = Array.from(checkboxes).filter(cb => cb.checked).map(cb => parseInt(cb.value));
+            const notes = window._supernoteNotes || [];
+            if (selectedIdx.length === 0) {
+                document.getElementById('superNoteResult').innerHTML = '<div style="color:#c62828;">Please select at least one note.</div>';
+                return;
+            }
+            // Prepare selected notes
+            const selectedNotes = selectedIdx.map(idx => notes[idx]);
+            document.getElementById('superNoteResult').innerHTML = 'Summarizing with Gemini...';
+            try {
+                const res = await fetch('http://localhost:5000/api/supernote', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ notes: selectedNotes })
+                });
+                const result = await res.json();
+                if (result.supernote) {
+                    const sn = result.supernote;
+                    document.getElementById('superNoteResult').innerHTML = `
+                        <div style='padding:15px;background:#e3f2fd;border-radius:4px;border:1px solid #2196F3;'>
+                            <b>SuperNote (Gemini)</b><br>
+                            <b>Header:</b> ${sn.Header}<br>
+                            <b>Topic:</b> ${sn.Topic}<br>
+                            <b>Sum:</b> ${sn.Sum}<br>
+                            <b>Provider:</b> ${sn.Provider}<br>
+                            <b>DateTime:</b> ${sn.DateTime}<br>
+                        </div>
+                    `;
+                } else {
+                    document.getElementById('superNoteResult').innerHTML = `<div style='color:#c62828;'>${result.error || 'Failed to summarize.'}</div>`;
+                }
+            } catch (err) {
+                document.getElementById('superNoteResult').innerHTML = '<div style="color:#c62828;">Failed to send to Gemini.</div>';
+            }
+        }
+
+        // Fetch all supernotes from backend
+        async function fetchSuperNotes() {
+            const container = document.getElementById('allSuperNotes');
+            container.innerHTML = 'Loading...';
+            try {
+                const res = await fetch('http://localhost:5000/api/supernotes', {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const result = await res.json();
+                if (result.supernotes && Array.isArray(result.supernotes) && result.supernotes.length > 0) {
+                    container.innerHTML = result.supernotes.map(sn => `
+                        <div style='padding:15px;background:#fff3e0;border-radius:4px;border:1px solid #FF9800;margin-bottom:15px;'>
+                            <b>Header:</b> ${sn.Header}<br>
+                            <b>Topic:</b> ${sn.Topic}<br>
+                            <b>Sum:</b> ${sn.Sum}<br>
+                            <b>Provider:</b> ${sn.Provider}<br>
+                            <b>DateTime:</b> ${sn.DateTime}<br>
+                        </div>
+                    `).join('');
+                } else {
+                    container.innerHTML = `<div style='color:#c62828;'>No supernotes found.</div>`;
+                }
+            } catch (err) {
+                container.innerHTML = '<div style="color:#c62828;">Failed to fetch supernotes.</div>';
+            }
+        }
+
+        // Fetch supernotes by selected topic
+        async function fetchSuperNotesByTopic() {
+            const topic = document.getElementById('supernoteTopicSelect').value;
+            const container = document.getElementById('allSuperNotes');
+            container.innerHTML = 'Loading...';
+            try {
+                const res = await fetch('http://localhost:5000/api/supernotes', {
+                    method: 'GET',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const result = await res.json();
+                if (result.supernotes && Array.isArray(result.supernotes)) {
+                    const filtered = result.supernotes.filter(sn => sn.Topic === topic);
+                    if (filtered.length > 0) {
+                        container.innerHTML = filtered.map(sn => `
+                            <div style='padding:15px;background:#fff3e0;border-radius:4px;border:1px solid #FF9800;margin-bottom:15px;'>
+                                <b>Header:</b> ${sn.Header}<br>
+                                <b>Topic:</b> ${sn.Topic}<br>
+                                <b>Sum:</b> ${sn.Sum}<br>
+                                <b>Provider:</b> ${sn.Provider}<br>
+                                <b>DateTime:</b> ${sn.DateTime}<br>
+                                <button onclick="deleteSuperNote('${sn._id}')" style='margin-top:8px;padding:6px 12px;background:#e53935;color:#fff;border:none;border-radius:4px;cursor:pointer;'>Delete</button>
+                            </div>
+                        `).join('');
+                    } else {
+                        container.innerHTML = `<div style='color:#c62828;'>No supernotes found for this topic.</div>`;
+                    }
+                } else {
+                    container.innerHTML = `<div style='color:#c62828;'>No supernotes found.</div>`;
+                }
+            } catch (err) {
+                container.innerHTML = '<div style="color:#c62828;">Failed to fetch supernotes.</div>';
+            }
+        }
+        // Delete supernote by id
+        async function deleteSuperNote(id) {
+            if (!confirm('Are you sure you want to delete this supernote?')) return;
+            try {
+                const res = await fetch(`http://localhost:5000/api/supernote/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Content-Type': 'application/json' }
+                });
+                const result = await res.json();
+                if (result.success) {
+                    fetchSuperNotesByTopic();
+                } else {
+                    alert(result.error || 'Failed to delete supernote.');
+                }
+            } catch (err) {
+                alert('Failed to delete supernote.');
+            }
+        }
+
+        document.getElementById('fetchNoteBtn').addEventListener('click', fetchNote);
+        document.getElementById('makeSuperNoteBtn').addEventListener('click', makeSuperNote);
+        document.getElementById('showSuperNotesBtn').addEventListener('click', fetchSuperNotesByTopic);
+        window.onload = function () { loadTopics(); loadSupernoteTopics(); };
+    </script>
+</body>
+
+</html>

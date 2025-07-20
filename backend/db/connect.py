@@ -19,4 +19,5 @@ user_collection = mongo_db["users"]
 team_collection = mongo_db["teams"]
 member_collection = mongo_db["members"]
 note_collection = mongo_db["notes"]
+super_note_collection = mongo_db["supernotes"]
 
