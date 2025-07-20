@@ -10,9 +10,17 @@ import google.generativeai as genai
 from dotenv import load_dotenv
 load_dotenv()
 
+
 # Gemini setup with 2.5-flash model
-genai.configure(api_key="{os.getenv('GENAI_API_KEY')}")
+genai.configure(api_key=f"{os.getenv('GENAI_API_KEY')}")
 model = genai.GenerativeModel('gemini-2.5-flash')  # Using Gemini 2.5-flash for faster responses
+
+# Test Gemini connection
+try:
+    test_response = model.generate_content("Test connection to Gemini API.")
+    print("Gemini API connection successful.")
+except Exception as e:
+    print(f"Gemini API connection failed: {e}")
 
 
 # JWT settings
@@ -269,18 +277,17 @@ def get_note():
 
 
 # --- Summarize text route ---
-
-@user_bp.route('/summarize', methods=['POST'])
+@user_bp.route('/summarize', methods=['GET', 'POST'])
 def summarize():
+    if request.method == 'GET':
+        return render_template('summarize.html')
     try:
         text = request.form.get('text')
         if not text:
             return render_template('summarize.html', error="Please enter some text to summarize.")
-        
         # Generate summary using Gemini
         response = model.generate_content(f"Please summarize the following text in a clear and concise way, maintaining the key points: {text}")
         summary = response.text
-        
         return render_template('summarize.html', summary=summary)
     except Exception as e:
         return render_template('summarize.html', error=f"Error generating summary: {str(e)}")
