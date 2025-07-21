@@ -88,20 +88,32 @@ Update the database configuration in `connect.py`:
 .venv\Scripts\Activate.ps1
 ```
 
-2. Run backend (Terminal 1):
+2. Start the application:
+
+Option 1 - Using run-dev.ps1 (Recommended):
+```powershell
+.\run-dev.ps1
+```
+This will automatically start both backend and frontend in separate windows.
+
+Option 2 - Manual start:
+
+In Terminal 1 (Backend):
 ```bash
-python app.py
+python backend/app.py
 ```
 Backend runs on: http://127.0.0.1:5000
 
-3. Run frontend (Terminal 2):
+In Terminal 2 (Frontend):
 ```bash
 cd frontend
 python -m http.server 8000
 ```
 Frontend runs on: http://localhost:8000
 
-To stop servers: Press Ctrl+C in each terminal
+To stop servers:
+- For run-dev.ps1: Close both PowerShell windows
+- For manual start: Press Ctrl+C in each terminal
 
 ## Tech Stack
 
