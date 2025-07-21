@@ -7,5 +7,4 @@ dotenv
 pymongo
 bcrypt
 PyJWT
-google-generativeai
 secrets==1.0.2
