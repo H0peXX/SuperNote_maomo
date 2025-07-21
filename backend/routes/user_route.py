@@ -329,6 +329,16 @@ def save():
         return jsonify({"error": f"Error saving to database: {str(e)}"}), 500
     
 
+
+# --- Get all notes (GET, for recent notes) ---
+@note_bp.route('/api/notes', methods=['GET'])
+def get_notes():
+    try:
+        notes = list(note_collection.find({}).sort('DateTime', -1).limit(5))
+        return jsonify({'notes': mongo_to_json(notes)})
+    except Exception as e:
+        return jsonify({'error': f'Error fetching notes: {str(e)}'}), 500
+
 # --- Get note by header (POST) ---
 @note_bp.route('/api/note', methods=['POST'])
 def get_note():

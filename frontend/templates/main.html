@@ -128,6 +128,32 @@
                 console.error('Error fetching teams:', error);
                 document.getElementById('team-updates').innerHTML = '<p class="empty-state">No team updates</p>';
             });
+
+            // Fetch and display recent notes
+            fetch('http://localhost:5000/api/notes', {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                const recentNotesDiv = document.getElementById('recent-notes');
+                recentNotesDiv.innerHTML = '';
+                if (Array.isArray(data.notes) && data.notes.length > 0) {
+                    data.notes.forEach(note => {
+                        const p = document.createElement('p');
+                        p.innerHTML = `<b>Header:</b> ${note.Header || ''}<br><b>Topic:</b> ${note.Topic || ''}`;
+                        recentNotesDiv.appendChild(p);
+                    });
+                } else {
+                    recentNotesDiv.innerHTML = '<p class="empty-state">No recent notes</p>';
+                }
+            })
+            .catch(error => {
+                console.error('Error fetching recent notes:', error);
+                document.getElementById('recent-notes').innerHTML = '<p class="empty-state">No recent notes</p>';
+            });
         };
 
 
