@@ -283,34 +283,37 @@ def get_teams():
 
 
 # --- Summarize text input ---
-@note_bp.route('/summarize', methods=['GET', 'POST'])
+@note_bp.route('/api/summarize', methods=['POST'])
+@cross_origin()
 def summarize():
-
-    if request.method == 'GET':
-        return render_template('summarize.html')
     try:
-        text = request.form.get('text')
+        data = request.get_json()
+        text = data.get('text')
+        if not text:
+            return jsonify({'error': 'Please enter some text to summarize.'}), 400
+        
         system_prompt = "Your job is to summarize the provided text in a clear and concise way, maintaining the key points."
         structure_output = "Respond in text format only, without any additional formatting or HTML tags."
-        if not text:
-            return render_template('summarize.html', error="Please enter some text to summarize.")
+        
         # Generate summary using Gemini
         response = model.generate_content(f"{system_prompt}{structure_output}{text}")
         summary = response.text
-        return render_template('summarize.html', summary=summary)
+        return jsonify({'summary': summary})
     except Exception as e:
-        return render_template('summarize.html', error=f"Error generating summary: {str(e)}")
+        return jsonify({'error': f"Error generating summary: {str(e)}"}), 500
     
 
 
 # --- Save summary input ---
 @note_bp.route('/save', methods=['POST'])
+@cross_origin()
 def save():
     try:
-        summary = request.form.get('summary')
-        header = request.form.get('header')
-        topic = request.form.get('topic')
-        provider = request.form.get('provider')
+        data = request.get_json()
+        summary = data.get('summary')
+        header = data.get('header')
+        topic = data.get('topic')
+        provider = data.get('provider')
         current_date = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
         
         # Create document

@@ -59,6 +59,7 @@
             background-color: #f9f9f9;
             border-radius: 4px;
             border: 1px solid #ddd;
+            display: none;
         }
         .message {
             padding: 10px;
@@ -71,6 +72,7 @@
             padding: 10px;
             margin: 10px 0;
             border-radius: 4px;
+            display: none;
         }
         .success {
             background-color: #e8f5e9;
@@ -78,6 +80,7 @@
             padding: 10px;
             margin: 10px 0;
             border-radius: 4px;
+            display: none;
         }
     </style>
 </head>
@@ -88,55 +91,131 @@
         </button>
         <h1>Text Summarization</h1>
 
-        {% if error %}
-        <div class="error">{{ error }}</div>
-        {% endif %}
-
-        {% if message %}
-        <div class="success">{{ message }}</div>
-        {% endif %}
+        <div id="errorMessage" class="error"></div>
+        <div id="successMessage" class="success"></div>
 
         <!-- Text Input Form -->
-        <form action="http://localhost:5000/summarize" method="POST">
-            <div class="form-group">
-                <label for="text">Enter text to summarize:</label>
-                <textarea id="text" name="text" required placeholder="Paste your text here..."></textarea>
-            </div>
-            <button type="submit">Generate Summary</button>
-        </form>
-
-        {% if summary %}
-        <div class="summary-section">
-            <h2>Generated Summary:</h2>
-            <p>{{ summary }}</p>
-            
-            <form action="http://localhost:5000/save" method="POST">
-                <input type="hidden" name="summary" value="{{ summary }}">
-                
-                <div class="form-group">
-                    <label for="header">Header:</label>
-                    <input type="text" id="header" name="header" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="topic">Topic:</label>
-                    <input type="text" id="topic" name="topic" required>
-                </div>
-                
-                <div class="form-group">
-                    <label for="provider">Provider:</label>
-                    <input type="text" id="provider" name="provider" required>
-                </div>
-                
-                <button type="submit">Save to Database</button>
-            </form>
+        <div class="form-group">
+            <label for="text">Enter text to summarize:</label>
+            <textarea id="text" required placeholder="Paste your text here..."></textarea>
         </div>
-        {% endif %}
+        <button id="generateBtn">Generate Summary</button>
+
+        <div id="summarySection" class="summary-section">
+            <h2>Generated Summary:</h2>
+            <p id="summaryText"></p>
+            
+            <div class="form-group">
+                <label for="header">Header:</label>
+                <input type="text" id="header" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="topic">Topic:</label>
+                <input type="text" id="topic" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="provider">Provider:</label>
+                <input type="text" id="provider" required>
+            </div>
+            
+            <button id="saveBtn">Save to Database</button>
+        </div>
     </div>
 </body>
 <script>
     document.getElementById('backHomeBtn').addEventListener('click', function() {
-         window.location.href = 'http://localhost:8000/templates/main.html';
+        window.location.href = 'main.html';
     });
+
+    document.getElementById('generateBtn').addEventListener('click', async function() {
+        const text = document.getElementById('text').value;
+        if (!text) {
+            showError('Please enter some text to summarize.');
+            return;
+        }
+
+        try {
+            const response = await fetch('http://localhost:5000/api/summarize', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ text })
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                document.getElementById('summaryText').textContent = data.summary;
+                document.getElementById('summarySection').style.display = 'block';
+                hideError();
+            } else {
+                showError(data.error || 'Failed to generate summary');
+            }
+        } catch (error) {
+            showError('Error connecting to the server');
+        }
+    });
+
+    document.getElementById('saveBtn').addEventListener('click', async function() {
+        const summary = document.getElementById('summaryText').textContent;
+        const header = document.getElementById('header').value;
+        const topic = document.getElementById('topic').value;
+        const provider = document.getElementById('provider').value;
+
+        if (!header || !topic || !provider) {
+            showError('Please fill in all fields');
+            return;
+        }
+
+        try {
+            const response = await fetch('http://localhost:5000/save', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    summary,
+                    header,
+                    topic,
+                    provider
+                })
+            });
+
+            const data = await response.json();
+            if (response.ok) {
+                showSuccess('Summary saved successfully!');
+                // Clear the form
+                document.getElementById('text').value = '';
+                document.getElementById('header').value = '';
+                document.getElementById('topic').value = '';
+                document.getElementById('provider').value = '';
+                document.getElementById('summarySection').style.display = 'none';
+            } else {
+                showError(data.error || 'Failed to save summary');
+            }
+        } catch (error) {
+            showError('Error connecting to the server');
+        }
+    });
+
+    function showError(message) {
+        const errorDiv = document.getElementById('errorMessage');
+        errorDiv.textContent = message;
+        errorDiv.style.display = 'block';
+        document.getElementById('successMessage').style.display = 'none';
+    }
+
+    function hideError() {
+        document.getElementById('errorMessage').style.display = 'none';
+    }
+
+    function showSuccess(message) {
+        const successDiv = document.getElementById('successMessage');
+        successDiv.textContent = message;
+        successDiv.style.display = 'block';
+        document.getElementById('errorMessage').style.display = 'none';
+    }
 </script>
 </html>
