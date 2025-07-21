@@ -285,14 +285,17 @@ def get_teams():
 # --- Summarize text input ---
 @note_bp.route('/summarize', methods=['GET', 'POST'])
 def summarize():
+
     if request.method == 'GET':
         return render_template('summarize.html')
     try:
         text = request.form.get('text')
+        system_prompt = "Your job is to summarize the provided text in a clear and concise way, maintaining the key points."
+        structure_output = "Respond in text format only, without any additional formatting or HTML tags."
         if not text:
             return render_template('summarize.html', error="Please enter some text to summarize.")
         # Generate summary using Gemini
-        response = model.generate_content(f"Please summarize the following text in a clear and concise way, maintaining the key points: {text}")
+        response = model.generate_content(f"{system_prompt}{structure_output}{text}")
         summary = response.text
         return render_template('summarize.html', summary=summary)
     except Exception as e:
@@ -321,10 +324,9 @@ def save():
         }
         
         # Save to MongoDB
-        result = note_collection.insert_one(note)
-        # Return JSON for frontend
-        note["_id"] = str(result.inserted_id)
-        return jsonify({"message": "Summary saved successfully!", "note": mongo_to_json(note)})
+        note_collection.insert_one(note)
+        # Return only success message
+        return jsonify({"message": "Summary saved successfully!"})
     except Exception as e:
         return jsonify({"error": f"Error saving to database: {str(e)}"}), 500
     
@@ -377,7 +379,9 @@ def make_supernote():
         combined_topic = notes[0].get('Topic', '') if notes else ''
         combined_provider = ', '.join([n.get('Provider', '') for n in notes])
         # Summarize and correct with Gemini
-        prompt = f"Summarize and correct the following combined notes for topic '{combined_topic}': {combined_sum}"
+        system_prompt = "Your job is combine and summarize the provided text in a clear and concise way, maintaining the key points."
+        structure_output = "Respond in text format only, without any additional formatting or HTML tags."
+        prompt = f"{system_prompt} {structure_output}'{combined_topic}': {combined_sum}"
         response = model.generate_content(prompt)
         supernote_sum = response.text
         current_date = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
