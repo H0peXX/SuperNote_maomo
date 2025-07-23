@@ -9,6 +9,9 @@ import os
 from flask_cors import cross_origin
 import google.generativeai as genai
 from dotenv import load_dotenv
+from werkzeug.utils import secure_filename
+from ocr.typhoon_ocr.ocr_utils import ocr_document
+
 load_dotenv()
 
 
@@ -365,6 +368,64 @@ def notes_by_topic():
     return jsonify({'notes': mongo_to_json(notes)})
 
 
+
+#PDF input
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'pdf'}
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+# input_text from OCR
+@note_bp.route('/api/notes_ocr', methods=['POST'])
+@cross_origin()
+def upload_and_process_file():
+    if 'file' not in request.files:
+        return jsonify({'error': 'No file part'}), 400
+
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({'error': 'No selected file'}), 400
+
+    if not allowed_file(file.filename):
+        return jsonify({'error': 'Unsupported file type'}), 400
+
+    filename = secure_filename(file.filename)
+    filepath = os.path.join(note_bp.config['UPLOAD_FOLDER'], filename)
+    file.save(filepath)
+
+    try:
+        # Step 1: OCR
+        extracted_text = ocr_document(
+            pdf_or_image_path=filepath,
+            task_type="default",
+            target_image_dim=1800,
+            target_text_length=8000,
+            page_num=1
+        )
+
+        # Step 2: Summarize with Gemini
+        summary = summarize(extracted_text)
+
+        # Step 3: Save to MongoDB
+        note = {
+            "original_text": extracted_text,
+            "summary": summary,
+            "filename": filename,
+            "created_at": datetime.utcnow()
+        }
+        note_collection.insert_one(note)
+
+        # Step 4: Respond to client
+        return jsonify({
+            "ocr_result": extracted_text,
+            "summary": summary,
+            "filename": filename
+        }), 200
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+    finally:
+        if os.path.exists(filepath):
+            os.remove(filepath)
 
 
 # --- Summarize text route ---

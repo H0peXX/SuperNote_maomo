@@ -89,6 +89,8 @@
         <button id="backHomeBtn" style="margin-bottom:20px; background-color:#2196F3; color:white; border:none; border-radius:4px; padding:10px 20px; cursor:pointer;">
             <i class="fas fa-home"></i> Home
         </button>
+        <button id="inputFile">Input File</button>
+
         <h1>Text Summarization</h1>
 
         <div id="errorMessage" class="error"></div>
@@ -128,6 +130,11 @@
     document.getElementById('backHomeBtn').addEventListener('click', function() {
         window.location.href = 'main.html';
     });
+    
+    document.getElementById('inputFile').addEventListener('click', function() {
+        window.location.href = 'input_with_ocr.html';
+    });
+
 
     document.getElementById('generateBtn').addEventListener('click', async function() {
         const text = document.getElementById('text').value;

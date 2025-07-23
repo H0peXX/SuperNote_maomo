@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Summarizer</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 40px;
+            background-color: #f2f2f2;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: auto;
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0px 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .summary-box {
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ccc;
+            background-color: #fafafa;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Upload PDF for Summary</h1>
+        <form id="uploadForm">
+            <input type="file" id="pdfFile" name="file" accept=".pdf" required />
+            <br><br>
+            <button type="submit">Upload & Summarize</button>
+        </form>
+
+        <div id="summary" class="summary-box" style="display: none;"></div>
+    </div>
+
+    <script>
+        const form = document.getElementById('uploadForm');
+        const summaryBox = document.getElementById('summary');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const fileInput = document.getElementById('pdfFile');
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+
+            summaryBox.style.display = "none";
+            summaryBox.textContent = "Processing...";
+
+            try {
+                const response = await fetch('http://localhost:5000/api/notes_ocr', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.summary) {
+                    summaryBox.textContent = data.summary;
+                    summaryBox.style.display = "block";
+                } else {
+                    summaryBox.textContent = "No summary returned.";
+                    summaryBox.style.display = "block";
+                }
+            } catch (err) {
+                summaryBox.textContent = "Error: " + err.message;
+                summaryBox.style.display = "block";
+            }
+        });
+    </script>
+</body>
+</html>

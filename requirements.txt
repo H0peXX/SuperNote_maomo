@@ -8,3 +8,16 @@ pymongo
 bcrypt
 PyJWT
 secrets==1.0.2
+
+# Image Processing
+Pillow==10.0.0
+# PDF Processing
+pypdf==5.8.0
+# OCR and Text Processing
+openai==1.97.0
+ftfy==6.3.1
+
+# Note: Poppler is a system requirement, not a Python package
+# For Windows: Download from https://github.com/oschwartz10612/poppler-windows/releases/
+# For macOS: brew install poppler
+# For Linux: sudo apt-get install poppler-utils
