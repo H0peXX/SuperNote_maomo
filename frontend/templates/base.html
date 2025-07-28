@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SuperNote{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+</head>
+<body>
+    <div class="app-container">
+        {% block sidebar %}
+        <aside class="sidebar">
+            <div class="user-section">
+                <div class="team-member">
+                    <span>Team Member</span>
+                    <div class="dropdown">
+                        <button class="dropdown-btn" id="userDropdown">
+                            <span id="currentUser">Mick,Ink</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <nav class="nav-menu">
+                <a href="#" class="nav-item" data-filter="recent">
+                    <i class="fas fa-clock"></i>
+                    <span>Recent</span>
+                </a>
+                <a href="#" class="nav-item" data-filter="favorite">
+                    <i class="fas fa-star"></i>
+                    <span>Favorite</span>
+                </a>
+                <a href="#" class="nav-item" data-filter="recent-summary">
+                    <i class="fas fa-clock"></i>
+                    <span>Recent Summary</span>
+                </a>
+                <a href="#" class="nav-item active" data-filter="favorite-summary">
+                    <i class="fas fa-star"></i>
+                    <span>Favorite Summary</span>
+                </a>
+            </nav>
+            
+            <div class="sidebar-footer">
+                <a href="/create-summary" class="btn-summary">
+                    <i class="fas fa-plus"></i>
+                    Summary
+                </a>
+            </div>
+        </aside>
+        {% endblock %}
+        
+        <main class="main-content">
+            <header class="content-header">
+                <div class="header-left">
+                    <div class="title-section">
+                        <i class="fas fa-file-alt header-icon"></i>
+                        <h1 class="dynamic-title" contenteditable="true">{% block page_title %}CNN{% endblock %}</h1>
+                    </div>
+                </div>
+                <div class="header-right">
+                    <div class="filter-dropdown">
+                        <select id="filterSelect">
+                            <option value="recent" selected>Recent</option>
+                            <option value="oldest">Oldest</option>
+                            <option value="favorites">Favorites</option>
+                        </select>
+                    </div>
+                    <button class="add-btn" onclick="window.location.href='/create-summary'">
+                        <i class="fas fa-plus"></i>
+                    </button>
+                </div>
+            </header>
+            
+            <div class="content-area">
+                {% block content %}{% endblock %}
+            </div>
+        </main>
+    </div>
+    
+    {% block scripts %}
+    <script>
+        // Check authentication status
+        function checkAuth() {
+            const token = localStorage.getItem('token');
+            if (!token && window.location.pathname !== '/login' && window.location.pathname !== '/signup' && window.location.pathname !== '/') {
+                window.location.href = '/login';
+                return false;
+            }
+            return true;
+        }
+        
+        // Set current user
+        function setCurrentUser() {
+            const username = localStorage.getItem('username');
+            if (username) {
+                document.getElementById('currentUser').textContent = username;
+            }
+        }
+        
+        // Initialize on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            if (checkAuth()) {
+                setCurrentUser();
+            }
+        });
+        
+        // Logout function
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('username');
+            window.location.href = '/login';
+        }
+    </script>
+    {% endblock %}
+</body>
+</html>

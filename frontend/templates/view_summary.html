@@ -1,0 +1,194 @@
+{% extends "base.html" %}
+
+{% block title %}View Summary - SuperNote{% endblock %}
+
+{% block page_title %}Summary{% endblock %}
+
+{% block content %}
+<div class="summary-view" id="summaryView">
+    <div class="loading" id="loadingState">
+        <div class="spinner"></div>
+        Loading summary...
+    </div>
+    
+    <div id="summaryContent" style="display: none;">
+        <div class="summary-header">
+            <h2 class="summary-title" id="summaryTitle"></h2>
+        </div>
+        
+        <div class="summary-content" id="summaryText"></div>
+        
+        <div class="summary-footer">
+            <div class="provider-info">
+                <span>Provider: <strong id="summaryProvider"></strong></span>
+                <span id="summaryDate"></span>
+            </div>
+            <div class="summary-actions">
+                <button class="btn-delete" onclick="deleteSummary()">
+                    <i class="fas fa-trash"></i>
+                    Delete
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="errorState" style="display: none;">
+        <div class="status-message error">
+            <p>Error loading summary. Please try again.</p>
+            <button class="btn-primary" onclick="window.location.href='/dashboard'">Back to Dashboard</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    let currentSummary = null;
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        if (checkAuth()) {
+            loadSummary();
+        }
+    });
+    
+    // Get summary ID from URL
+    function getSummaryId() {
+        const pathParts = window.location.pathname.split('/');
+        return pathParts[pathParts.length - 1];
+    }
+    
+    // Load summary data
+    async function loadSummary() {
+        const summaryId = getSummaryId();
+        const token = localStorage.getItem('token');
+        
+        try {
+            // Try to get as regular note first
+            let response = await fetch(`/api/note/${summaryId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            let summaryData = null;
+            let summaryType = 'note';
+            
+            if (response.ok) {
+                summaryData = await response.json();
+            } else {
+                // Try as supernote
+                response = await fetch(`/api/supernote/${summaryId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    summaryData = await response.json();
+                    summaryType = 'supernote';
+                }
+            }
+            
+            if (summaryData) {
+                currentSummary = { ...summaryData, type: summaryType };
+                displaySummary(summaryData);
+            } else {
+                showErrorState();
+            }
+        } catch (error) {
+            console.error('Error loading summary:', error);
+            showErrorState();
+        }
+    }
+    
+    // Display summary content
+    function displaySummary(summary) {
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('summaryContent').style.display = 'block';
+        
+        // Update page title
+        document.querySelector('.dynamic-title').textContent = summary.Header || 'Summary';
+        
+        // Update content
+        document.getElementById('summaryTitle').textContent = summary.Header || 'Untitled Summary';
+        document.getElementById('summaryText').textContent = summary.Sum || 'No content available';
+        document.getElementById('summaryProvider').textContent = summary.Provider || 'Unknown';
+        
+        // Format and display date
+        const formattedDate = formatDate(summary.DateTime);
+        document.getElementById('summaryDate').textContent = formattedDate;
+    }
+    
+    // Show error state
+    function showErrorState() {
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('errorState').style.display = 'block';
+    }
+    
+    // Delete summary
+    async function deleteSummary() {
+        if (!currentSummary || !confirm('Are you sure you want to delete this summary?')) {
+            return;
+        }
+        
+        try {
+            const token = localStorage.getItem('token');
+            const endpoint = currentSummary.type === 'supernote' 
+                ? `/api/supernote/${currentSummary._id}` 
+                : `/api/note/${currentSummary._id}`;
+            
+            const response = await fetch(endpoint, {
+                method: 'DELETE',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            if (response.ok) {
+                alert('Summary deleted successfully!');
+                window.location.href = '/dashboard';
+            } else {
+                alert('Error deleting summary');
+            }
+        } catch (error) {
+            console.error('Error deleting summary:', error);
+            alert('Error deleting summary');
+        }
+    }
+    
+    // Add edit button to header
+    document.addEventListener('DOMContentLoaded', function() {
+        setTimeout(() => {
+            const headerRight = document.querySelector('.header-right');
+            if (headerRight && currentSummary) {
+                const editBtn = document.createElement('button');
+                editBtn.className = 'add-btn';
+                editBtn.innerHTML = '<i class="fas fa-edit"></i>';
+                editBtn.onclick = () => window.location.href = `/edit-summary/${currentSummary._id}`;
+                headerRight.insertBefore(editBtn, headerRight.firstChild);
+            }
+        }, 500);
+    });
+    
+    // Utility function
+    function formatDate(dateString) {
+        try {
+            // Handle DD/MM/YYYY HH:MM:SS format
+            const parts = dateString.split(' ');
+            if (parts.length === 2) {
+                const [datePart, timePart] = parts;
+                const [day, month, year] = datePart.split('/');
+                const date = new Date(year, month - 1, day);
+                return `${date.toLocaleDateString()} at ${timePart}`;
+            }
+            return new Date(dateString).toLocaleString();
+        } catch {
+            return dateString;
+        }
+    }
+</script>
+{% endblock %}

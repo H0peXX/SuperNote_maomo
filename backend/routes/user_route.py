@@ -171,16 +171,42 @@ def login():
         return jsonify({'error': 'Invalid credentials'}), 401
 
     # Compare password with hash in database
-    stored_hash = user.get('password')
-    if stored_hash and bcrypt.checkpw(password.encode('utf-8'), stored_hash.encode('utf-8')):
+    stored_password = user.get('password')
+    password_matches = False
+    
+    if stored_password:
+        # Handle different password storage formats
+        if isinstance(stored_password, bytes):
+            # Password stored as bytes (bcrypt hash)
+            try:
+                password_matches = bcrypt.checkpw(password.encode('utf-8'), stored_password)
+            except Exception as e:
+                print(f"Bcrypt error with bytes: {e}")
+        elif isinstance(stored_password, str):
+            if stored_password.startswith('$2b$') or stored_password.startswith('$2a$'):
+                # Password stored as bcrypt hash string
+                try:
+                    password_matches = bcrypt.checkpw(password.encode('utf-8'), stored_password.encode('utf-8'))
+                except Exception as e:
+                    print(f"Bcrypt error with string: {e}")
+            else:
+                # Plain text password (legacy - should be migrated)
+                password_matches = (password == stored_password)
+                print(f"Warning: Plain text password found for user {username}. Consider migrating to bcrypt.")
+    
+    if password_matches:
         # Create JWT token
-        token = jwt.encode({"sub": user['username']}, SECRET_KEY, algorithm=ALGORITHM)
-        return jsonify({
-            'message': 'Login successful',
-            'username': user['username'],
-            'access_token': token,
-            'token_type': 'Bearer'
-        })
+        try:
+            token = jwt.encode({"sub": user['username']}, SECRET_KEY, algorithm=ALGORITHM)
+            return jsonify({
+                'message': 'Login successful',
+                'username': user['username'],
+                'access_token': token,
+                'token_type': 'Bearer'
+            })
+        except Exception as e:
+            print(f"JWT encoding error: {e}")
+            return jsonify({'error': 'Authentication error'}), 500
     else:
         return jsonify({'error': 'Invalid credentials'}), 401
 
@@ -406,6 +432,66 @@ def make_supernote():
     
 
 
+# --- Get all notes route ---
+@note_bp.route('/api/notes', methods=['GET'])
+@cross_origin()
+def get_notes():
+    try:
+        notes = list(note_collection.find({}))
+        return jsonify({"notes": mongo_to_json(notes)})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# --- Get single note by ID ---
+@note_bp.route('/api/note/<note_id>', methods=['GET'])
+@cross_origin()
+def get_note_by_id(note_id):
+    try:
+        note = note_collection.find_one({'_id': ObjectId(note_id)})
+        if note:
+            return jsonify(mongo_to_json(note))
+        else:
+            return jsonify({'error': 'Note not found'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# --- Update note by ID ---
+@note_bp.route('/api/note/<note_id>', methods=['PUT'])
+@cross_origin()
+def update_note(note_id):
+    try:
+        data = request.get_json()
+        update_data = {
+            'Header': data.get('Header'),
+            'Sum': data.get('Sum'),
+            'LastUpdate': data.get('LastUpdate')
+        }
+        
+        result = note_collection.update_one(
+            {'_id': ObjectId(note_id)}, 
+            {'$set': update_data}
+        )
+        
+        if result.matched_count > 0:
+            return jsonify({'success': True, 'message': 'Note updated successfully'})
+        else:
+            return jsonify({'error': 'Note not found'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# --- Delete note by ID ---
+@note_bp.route('/api/note/<note_id>', methods=['DELETE'])
+@cross_origin()
+def delete_note(note_id):
+    try:
+        result = note_collection.delete_one({'_id': ObjectId(note_id)})
+        if result.deleted_count == 1:
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'error': 'Note not found'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
 # --- Get all supernotes route ---
 @super_note_bp.route('/api/supernotes', methods=['GET'])
 @cross_origin()
@@ -415,25 +501,94 @@ def get_supernotes():
         return jsonify({"supernotes": mongo_to_json(supernotes)})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+# --- Get single supernote by ID ---
+@super_note_bp.route('/api/supernote/<supernote_id>', methods=['GET'])
+@cross_origin()
+def get_supernote_by_id(supernote_id):
+    try:
+        supernote = super_note_collection.find_one({'_id': ObjectId(supernote_id)})
+        if supernote:
+            return jsonify(mongo_to_json(supernote))
+        else:
+            return jsonify({'error': 'Supernote not found'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# --- Update supernote by ID ---
+@super_note_bp.route('/api/supernote/<supernote_id>', methods=['PUT'])
+@cross_origin()
+def update_supernote(supernote_id):
+    try:
+        data = request.get_json()
+        update_data = {
+            'Header': data.get('Header'),
+            'Sum': data.get('Sum'),
+            'LastUpdate': data.get('LastUpdate')
+        }
+        
+        result = super_note_collection.update_one(
+            {'_id': ObjectId(supernote_id)}, 
+            {'$set': update_data}
+        )
+        
+        if result.matched_count > 0:
+            return jsonify({'success': True, 'message': 'Supernote updated successfully'})
+        else:
+            return jsonify({'error': 'Supernote not found'}), 404
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# --- Create summary from text input (simplified version) ---
+@note_bp.route('/api/create-summary', methods=['POST'])
+@cross_origin()
+def create_summary():
+    try:
+        # For now, we'll create a simple text-based summary
+        # In the future, this could handle file uploads and process them
+        title = request.form.get('title')
+        files = request.files.getlist('files')
+        
+        if not title:
+            return jsonify({'error': 'Title is required'}), 400
+            
+        # For demo purposes, create a simple summary
+        # In a real implementation, you'd process the uploaded files
+        sample_text = f"This is a summary for '{title}'. Files uploaded: {len(files)} files."
+        
+        # Generate summary using Gemini
+        system_prompt = "Create a brief summary based on the provided information."
+        response = model.generate_content(f"{system_prompt} {sample_text}")
+        summary = response.text
+        
+        current_date = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+        username = 'Current User'  # In real app, get from auth token
+        
+        # Create document
+        note = {
+            "Header": title,
+            "Topic": "General",
+            "Sum": summary,
+            "Provider": username,
+            "DateTime": current_date,
+            "LastUpdate": current_date
+        }
+        
+        # Save to MongoDB
+        result = note_collection.insert_one(note)
+        note['_id'] = str(result.inserted_id)
+        
+        return jsonify({"message": "Summary created successfully!", "summary": mongo_to_json(note)})
+    except Exception as e:
+        return jsonify({"error": f"Error creating summary: {str(e)}"}), 500
+
+# Helper function to convert MongoDB ObjectId to string
 def mongo_to_json(doc):
     if isinstance(doc, list):
         return [mongo_to_json(d) for d in doc]
     if '_id' in doc:
         doc['_id'] = str(doc['_id'])
     return doc
-
-# --- Delete supernote by id ---
-@super_note_bp.route('/api/supernote/<id>', methods=['DELETE'])
-@cross_origin()
-def delete_supernote(id):
-    try:
-        result = super_note_collection.delete_one({'_id': ObjectId(id)})
-        if result.deleted_count == 1:
-            return jsonify({'success': True})
-        else:
-            return jsonify({'success': False, 'error': 'Supernote not found'}), 404
-    except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
 
 
 

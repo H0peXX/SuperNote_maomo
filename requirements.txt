@@ -3,8 +3,9 @@ Flask-SQLAlchemy==3.1.1
 Flask-Login==0.6.3
 Flask-WTF==1.2.1
 flask-cors
-dotenv
+python-dotenv
 pymongo
 bcrypt
 PyJWT
-secrets==1.0.2
+google-generativeai
+requests

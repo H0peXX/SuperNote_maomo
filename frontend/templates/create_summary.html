@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Create Summary - SuperNote{% endblock %}
+
+{% block page_title %}Create Summary{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <form id="create-summary-form" class="edit-form">
+        <input type="text" id="title" class="title-input" placeholder="Summary Title" required>
+        <div class="file-upload-area" id="fileUploadArea">
+            <i class="fas fa-cloud-upload-alt upload-icon"></i>
+            <p class="upload-text">Drag & drop files here or click to select files</p>
+            <button type="button" class="choose-files-btn">Choose Files</button>
+            <input type="file" id="fileInput" class="file-input" accept=".pdf,image/*" multiple>
+        </div>
+        <div class="file-list" id="fileList"></div>
+        <button type="submit" class="btn-primary">Create Summary</button>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    const fileUploadArea = document.getElementById('fileUploadArea');
+    const fileInput = document.getElementById('fileInput');
+    const fileList = document.getElementById('fileList');
+
+    fileUploadArea.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', handleFiles);
+
+    fileUploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        fileUploadArea.classList.add('dragover');
+    });
+
+    fileUploadArea.addEventListener('dragleave', () => {
+        fileUploadArea.classList.remove('dragover');
+    });
+
+    fileUploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        fileUploadArea.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        handleFiles({ target: { files } });
+    });
+
+    function handleFiles(e) {
+        const files = e.target.files;
+        fileList.innerHTML = '';
+
+        if (files.length === 0) {
+            fileList.innerHTML = '<p>No files selected</p>';
+            return;
+        }
+
+        Array.from(files).forEach(file => {
+            const listItem = document.createElement('div');
+            listItem.className = 'file-item';
+            listItem.innerHTML = `
+                <span>${file.name}</span>
+                <span>${(file.size / 1024).toFixed(2)} KB</span>
+            `;
+            fileList.appendChild(listItem);
+        });
+    }
+
+    document.getElementById('create-summary-form').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const title = document.getElementById('title').value.trim();
+        const files = fileInput.files;
+
+        if (!title || files.length === 0) {
+            alert('Please provide a title and select at least one file.');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('title', title);
+        for (const file of files) {
+            formData.append('files', file);
+        }
+
+        try {
+            const response = await fetch('/api/create-summary', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                alert('Summary created successfully!');
+                window.location.href = '/dashboard';
+            } else {
+                alert('Failed to create summary.');
+            }
+        } catch (error) {
+            console.error('Error creating summary:', error);
+            alert('Error creating summary.');
+        }
+    });
+</script>
+{% endblock %}

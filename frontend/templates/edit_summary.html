@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Summary - SuperNote{% endblock %}
+
+{% block page_title %}Edit Summary{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <div class="loading" id="loadingState">
+        <div class="spinner"></div>
+        Loading summary...
+    </div>
+    
+    <form id="edit-summary-form" class="edit-form" style="display: none;">
+        <input type="text" id="title" class="title-input" placeholder="Summary Title" required>
+        <textarea id="content" class="content-textarea" placeholder="Summary content..." required></textarea>
+        <button type="submit" class="btn-save">Save Changes</button>
+    </form>
+    
+    <div id="errorState" style="display: none;">
+        <div class="status-message error">
+            <p>Error loading summary. Please try again.</p>
+            <button class="btn-primary" onclick="window.location.href='/dashboard'">Back to Dashboard</button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    let currentSummary = null;
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        if (checkAuth()) {
+            loadSummary();
+        }
+    });
+    
+    // Get summary ID from URL
+    function getSummaryId() {
+        const pathParts = window.location.pathname.split('/');
+        return pathParts[pathParts.length - 1];
+    }
+    
+    // Load summary data for editing
+    async function loadSummary() {
+        const summaryId = getSummaryId();
+        const token = localStorage.getItem('token');
+        
+        try {
+            // Try to get as regular note first
+            let response = await fetch(`/api/note/${summaryId}`, {
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                }
+            });
+            
+            let summaryData = null;
+            let summaryType = 'note';
+            
+            if (response.ok) {
+                summaryData = await response.json();
+            } else {
+                // Try as supernote
+                response = await fetch(`/api/supernote/${summaryId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    }
+                });
+                
+                if (response.ok) {
+                    summaryData = await response.json();
+                    summaryType = 'supernote';
+                }
+            }
+            
+            if (summaryData) {
+                currentSummary = { ...summaryData, type: summaryType };
+                displayEditForm(summaryData);
+            } else {
+                showErrorState();
+            }
+        } catch (error) {
+            console.error('Error loading summary:', error);
+            showErrorState();
+        }
+    }
+    
+    // Display edit form with current data
+    function displayEditForm(summary) {
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('edit-summary-form').style.display = 'block';
+        
+        // Update page title
+        document.querySelector('.dynamic-title').textContent = `Edit: ${summary.Header || 'Summary'}`;
+        
+        // Populate form fields
+        document.getElementById('title').value = summary.Header || '';
+        document.getElementById('content').value = summary.Sum || '';
+    }
+    
+    // Show error state
+    function showErrorState() {
+        document.getElementById('loadingState').style.display = 'none';
+        document.getElementById('errorState').style.display = 'block';
+    }
+    
+    // Handle form submission
+    document.getElementById('edit-summary-form').addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        if (!currentSummary) {
+            alert('Error: Summary data not loaded');
+            return;
+        }
+        
+        const title = document.getElementById('title').value.trim();
+        const content = document.getElementById('content').value.trim();
+        
+        if (!title || !content) {
+            alert('Please fill in both title and content');
+            return;
+        }
+        
+        const submitBtn = document.querySelector('button[type="submit"]');
+        const originalText = submitBtn.textContent;
+        
+        // Show loading state
+        submitBtn.innerHTML = '<div class="spinner"></div>Saving...';
+        submitBtn.disabled = true;
+        
+        try {
+            const token = localStorage.getItem('token');
+            
+            // Prepare update data
+            const updateData = {
+                Header: title,
+                Sum: content,
+                LastUpdate: new Date().toLocaleString('en-GB', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                }).replace(',', '')
+            };
+            
+            const endpoint = currentSummary.type === 'supernote' 
+                ? `/api/supernote/${currentSummary._id}` 
+                : `/api/note/${currentSummary._id}`;
+            
+            const response = await fetch(endpoint, {
+                method: 'PUT',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updateData)
+            });
+            
+            if (response.ok) {
+                alert('Summary updated successfully!');
+                window.location.href = `/view-summary/${currentSummary._id}`;
+            } else {
+                const error = await response.json();
+                alert('Error updating summary: ' + (error.message || 'Unknown error'));
+            }
+        } catch (error) {
+            console.error('Error updating summary:', error);
+            alert('Error updating summary. Please try again.');
+        } finally {
+            // Reset button state
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+        }
+    });
+    
+    // Auto-resize textarea
+    document.getElementById('content').addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = this.scrollHeight + 'px';
+    });
+</script>
+{% endblock %}

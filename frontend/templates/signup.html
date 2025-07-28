@@ -1,94 +1,113 @@
 <!DOCTYPE html>
-<html>
-
+<html lang="en">
 <head>
-    <title>SuperNote Signup</title>
-    <link rel="stylesheet" href="styles.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SuperNote - Sign Up</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
 </head>
-
-<body class="container">
-    <h1>Create a new account</h1>
-
-    <form id="signup-form">
-        <div class="form-group">
-            <label for="username">Username:</label>
-            <input type="text" id="username" name="username" required />
+<body>
+    <div class="auth-container">
+        <div class="auth-card animate-fade-in">
+            <h1>SuperNote</h1>
+            <p class="subtitle">Create your account to get started</p>
+            
+            <form id="signup-form" class="auth-form">
+                <div class="form-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" name="username" required placeholder="Enter your username">
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <input type="email" id="email" name="email" required placeholder="Enter your email">
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" name="password" required placeholder="Enter your password">
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirm-password">Confirm Password</label>
+                    <input type="password" id="confirm-password" name="confirm-password" required placeholder="Confirm your password">
+                </div>
+                
+                <button type="submit" class="btn-primary">Sign Up</button>
+            </form>
+            
+            <p class="auth-link">
+                Already have an account? <a href="/login" id="login-link">Login</a>
+            </p>
+            
+            <div id="signup-status" class="status-message" style="display: none;"></div>
         </div>
-
-        <div class="form-group">
-            <label for="password">Password:</label>
-            <input type="password" id="password" name="password" required />
-        </div>
-
-        <div class="form-group">
-            <label for="fname">First Name:</label>
-            <input type="text" id="fname" name="fname" required />
-        </div>
-
-        <div class="form-group">
-            <label for="lname">Last Name:</label>
-            <input type="text" id="lname" name="lname" required />
-        </div>
-
-        <div class="form-group">
-            <label for="email">Email:</label>
-            <input type="email" id="email" name="email" required />
-        </div>
-
-        <div class="form-group">
-            <label for="dob">Date of Birth:</label>
-            <input type="date" id="dob" name="dob" required />
-        </div>
-
-        <button type="submit" class="btn-primary">Sign Up</button>
-        <button type="button" id="login-btn" class="btn-secondary">Back to Login</button>
-    </form>
-
-    <p id="signup-status" class="status-message"></p>
-
+    </div>
+    
     <script>
         document.getElementById('signup-form').addEventListener('submit', async function (e) {
             e.preventDefault();
-
+            
             const username = document.getElementById('username').value;
-            const password = document.getElementById('password').value;
-            const fname = document.getElementById('fname').value;
-            const lname = document.getElementById('lname').value;
             const email = document.getElementById('email').value;
-            const dob = document.getElementById('dob').value;
-
+            const password = document.getElementById('password').value;
+            const confirmPassword = document.getElementById('confirm-password').value;
+            const statusElement = document.getElementById('signup-status');
+            const submitBtn = document.querySelector('button[type="submit"]');
+            
+            // Validate passwords match
+            if (password !== confirmPassword) {
+                statusElement.textContent = 'Passwords do not match';
+                statusElement.className = 'status-message error';
+                statusElement.style.display = 'block';
+                return;
+            }
+            
+            // Show loading state
+            submitBtn.innerHTML = '<div class="spinner"></div>Creating account...';
+            submitBtn.disabled = true;
+            
             try {
-                const response = await fetch('http://localhost:5000/api/signup', {
+                const response = await fetch('/api/signup', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
                         username,
-                        password,
-                        fname,
-                        lname,
                         email,
-                        dob
+                        password,
+                        fname: username, // Using username as first name for simplicity
+                        lname: '',
+                        dob: '1990-01-01' // Default DOB
                     })
                 });
-
+                
                 const result = await response.json();
-                const statusElement = document.getElementById('signup-status');
-
+                
                 if (response.ok) {
-                    statusElement.innerText = 'Signup successful! Please login.';
+                    statusElement.textContent = 'Account created successfully! Redirecting to login...';
+                    statusElement.className = 'status-message success';
+                    statusElement.style.display = 'block';
+                    
+                    // Redirect to login after successful signup
+                    setTimeout(() => {
+                        window.location.href = '/login';
+                    }, 2000);
                 } else {
-                    statusElement.innerText = 'Signup failed: ' + result.error;
+                    statusElement.textContent = result.error || 'Signup failed. Please try again.';
+                    statusElement.className = 'status-message error';
+                    statusElement.style.display = 'block';
                 }
             } catch (error) {
-                document.getElementById('signup-status').innerText = 'Network error';
+                statusElement.textContent = 'Network error. Please try again.';
+                statusElement.className = 'status-message error';
+                statusElement.style.display = 'block';
+            } finally {
+                // Reset button state
+                submitBtn.innerHTML = 'Sign Up';
+                submitBtn.disabled = false;
             }
         });
-
-        document.getElementById('login-btn').addEventListener('click', function () {
-            window.location.href = 'index.html';
-        });
     </script>
-
 </body>
-
 </html>
