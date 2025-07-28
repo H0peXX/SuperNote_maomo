@@ -5,83 +5,120 @@
 {% block page_title %}Create Super Note{% endblock %}
 
 {% block content %}
-<div class="supernote-container">
-    <!-- Step 1: Select Topic -->
-    <div class="step-section" id="step1">
-        <div class="step-header">
-            <h3>Step 1: Select Topic</h3>
-            <p>Choose a topic to view all related notes</p>
+<div class="supernote-wizard">
+    <!-- Progress Bar -->
+    <div class="progress-container">
+        <div class="progress-bar">
+            <div class="progress-step active" data-step="1">
+                <div class="step-circle"><i class="fas fa-list"></i></div>
+                <span class="step-label">Select Topic</span>
+            </div>
+            <div class="progress-line"></div>
+            <div class="progress-step" data-step="2">
+                <div class="step-circle"><i class="fas fa-check-square"></i></div>
+                <span class="step-label">Choose Notes</span>
+            </div>
+            <div class="progress-line"></div>
+            <div class="progress-step" data-step="3">
+                <div class="step-circle"><i class="fas fa-magic"></i></div>
+                <span class="step-label">Create & Save</span>
+            </div>
         </div>
-        
-        <div class="form-group">
-            <label for="topicSelect">Topic:</label>
-            <select id="topicSelect" class="form-select">
-                <option value="">Select a topic...</option>
-            </select>
-        </div>
-        
-        <button id="fetchNotesBtn" class="btn-primary" disabled>
-            <i class="fas fa-search"></i>
-            Show Notes
-        </button>
     </div>
 
-    <!-- Step 2: Select Notes -->
-    <div class="step-section" id="step2" style="display: none;">
-        <div class="step-header">
-            <h3>Step 2: Select Notes</h3>
-            <p>Choose the notes you want to combine into a Super Note</p>
-        </div>
-        
-        <div class="notes-selection">
-            <div class="selection-controls">
-                <button id="selectAllBtn" class="btn-secondary">Select All</button>
-                <button id="deselectAllBtn" class="btn-secondary">Deselect All</button>
-                <span id="selectionCount" class="selection-count">0 notes selected</span>
+    <!-- Step 1: Topic Selection -->
+    <div class="wizard-step" id="step1">
+        <div class="step-card">
+            <div class="card-icon">
+                <i class="fas fa-folder-open"></i>
+            </div>
+            <h2>Choose Your Topic</h2>
+            <p class="step-description">Select a topic to see all available notes that can be combined into a Super Note</p>
+            
+            <div class="topic-selector">
+                <div class="select-wrapper">
+                    <select id="topicSelect" class="modern-select">
+                        <option value="">-- Select a Topic --</option>
+                    </select>
+                    <i class="fas fa-chevron-down select-arrow"></i>
+                </div>
             </div>
             
-            <div id="notesList" class="notes-list">
-                <!-- Notes will be populated here -->
-            </div>
-        </div>
-        
-        <div class="step-actions">
-            <button id="backToStep1" class="btn-secondary">
-                <i class="fas fa-arrow-left"></i>
-                Back
-            </button>
-            <button id="createSuperNoteBtn" class="btn-primary" disabled>
-                <i class="fas fa-magic"></i>
-                Create Super Note
+            <button id="fetchNotesBtn" class="btn-next" disabled>
+                <span>Continue</span>
+                <i class="fas fa-arrow-right"></i>
             </button>
         </div>
     </div>
 
-    <!-- Step 3: Review & Save -->
-    <div class="step-section" id="step3" style="display: none;">
-        <div class="step-header">
-            <h3>Step 3: Review & Save</h3>
-            <p>Review your Super Note and save it</p>
+    <!-- Step 2: Note Selection -->
+    <div class="wizard-step hidden" id="step2">
+        <div class="step-card wide">
+            <div class="selection-header">
+                <div class="header-left">
+                    <h2>Select Notes to Combine</h2>
+                    <p class="selection-subtitle" id="topicName"></p>
+                </div>
+                <div class="header-right">
+                    <div class="selection-counter">
+                        <span id="selectionCount">0 selected</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="selection-toolbar">
+                <button id="selectAllBtn" class="btn-tool">
+                    <i class="fas fa-check-double"></i> Select All
+                </button>
+                <button id="deselectAllBtn" class="btn-tool">
+                    <i class="fas fa-times"></i> Clear All
+                </button>
+            </div>
+            
+            <div id="notesList" class="notes-grid">
+                <!-- Notes will be populated here -->
+            </div>
+            
+            <div class="wizard-navigation">
+                <button id="backToStep1" class="btn-back">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <button id="createSuperNoteBtn" class="btn-next" disabled>
+                    <span>Create Super Note</span>
+                    <i class="fas fa-magic"></i>
+                </button>
+            </div>
         </div>
-        
-        <div class="loading-state" id="loadingState" style="display: none;">
-            <div class="spinner"></div>
-            <p>Creating Super Note with AI...</p>
-        </div>
-        
-        <div id="superNotePreview" class="supernote-preview">
-            <!-- Super Note preview will be shown here -->
-        </div>
-        
-        <div class="step-actions">
-            <button id="backToStep2" class="btn-secondary">
-                <i class="fas fa-arrow-left"></i>
-                Back
-            </button>
-            <button id="saveSuperNoteBtn" class="btn-success" style="display: none;">
-                <i class="fas fa-save"></i>
-                Save Super Note
-            </button>
+    </div>
+
+    <!-- Step 3: Preview & Save -->
+    <div class="wizard-step hidden" id="step3">
+        <div class="step-card wide">
+            <div class="preview-header">
+                <h2>Your Super Note is Ready!</h2>
+                <p>Review the generated content and save your Super Note</p>
+            </div>
+            
+            <div class="loading-state" id="loadingState" style="display: none;">
+                <div class="loading-animation">
+                    <div class="spinner-modern"></div>
+                    <p>AI is combining your notes...</p>
+                    <small>This may take a few moments</small>
+                </div>
+            </div>
+            
+            <div id="superNotePreview" class="preview-container" style="display: none;">
+                <!-- Super Note preview will be shown here -->
+            </div>
+            
+            <div class="wizard-navigation">
+                <button id="backToStep2" class="btn-back">
+                    <i class="fas fa-arrow-left"></i> Back
+                </button>
+                <button id="saveSuperNoteBtn" class="btn-save" style="display: none;">
+                    <i class="fas fa-save"></i> Save Super Note
+                </button>
+            </div>
         </div>
     </div>
 </div>
@@ -99,6 +136,8 @@
     document.addEventListener('DOMContentLoaded', function() {
         if (checkAuth()) {
             loadTopics();
+            // Show first step by default
+            showStep(1);
         }
     });
 
@@ -170,31 +209,41 @@
     // Display notes for selection
     function displayNotes(notes) {
         const notesList = document.getElementById('notesList');
+        const topicName = document.getElementById('topicName');
+        
         notesList.innerHTML = '';
+        topicName.textContent = `Topic: ${notes[0]?.Topic || 'Unknown'} (${notes.length} notes available)`;
         
         notes.forEach((note, index) => {
             const noteCard = document.createElement('div');
-            noteCard.className = 'individual-note-box';
+            noteCard.className = 'note-card-modern';
             noteCard.innerHTML = `
-                <div class="note-selection-header">
-                    <input type="checkbox" class="note-checkbox" value="${index}" id="note-${index}">
-                    <label for="note-${index}" class="checkbox-label">Select this note</label>
-                </div>
-                <div class="note-content-box">
-                    <div class="note-title-section">
-                        <h4 class="note-title">${escapeHtml(note.Header || 'Untitled Note')}</h4>
-                        <div class="note-metadata">
-                            <span class="note-date"><i class="fas fa-calendar"></i> ${formatDate(note.DateTime)}</span>
-                            <span class="note-provider"><i class="fas fa-user"></i> ${escapeHtml(note.Provider || 'Unknown')}</span>
+                <div class="note-card-header">
+                    <div class="checkbox-container">
+                        <input type="checkbox" class="note-checkbox" value="${index}" id="note-${index}">
+                        <div class="checkbox-custom"></div>
+                    </div>
+                    <div class="note-title-area">
+                        <h3 class="note-title">${escapeHtml(note.Header || 'Untitled Note')}</h3>
+                        <div class="note-meta-row">
+                            <span class="meta-item">
+                                <i class="fas fa-user"></i>
+                                ${escapeHtml(note.Provider || 'Unknown')}
+                            </span>
+                            <span class="meta-item">
+                                <i class="fas fa-calendar"></i>
+                                ${formatDate(note.DateTime)}
+                            </span>
                         </div>
                     </div>
-                    <div class="note-summary-section">
-                        <h5 class="summary-label">Summary:</h5>
-                        <div class="note-summary">${escapeHtml(note.Sum || 'No summary available')}</div>
+                </div>
+                <div class="note-content">
+                    <div class="content-preview">
+                        ${escapeHtml(truncateText(note.Sum || 'No summary available', 200))}
                     </div>
-                    <div class="note-footer">
-                        <span class="note-topic"><i class="fas fa-tag"></i> ${escapeHtml(note.Topic || 'General')}</span>
-                        <span class="note-last-update"><i class="fas fa-clock"></i> Last updated: ${formatDate(note.LastUpdate || note.DateTime)}</span>
+                    <div class="content-stats">
+                        <span class="word-count">${countWords(note.Sum || '')} words</span>
+                        <span class="topic-tag">${escapeHtml(note.Topic || 'General')}</span>
                     </div>
                 </div>
             `;
@@ -214,8 +263,13 @@
         const checkboxes = document.querySelectorAll('.note-checkbox');
         const selectedCount = Array.from(checkboxes).filter(cb => cb.checked).length;
         
-        document.getElementById('selectionCount').textContent = `${selectedCount} notes selected`;
+        document.getElementById('selectionCount').textContent = `${selectedCount} selected`;
         document.getElementById('createSuperNoteBtn').disabled = selectedCount === 0;
+        
+        // Update progress step
+        if (selectedCount > 0) {
+            updateProgressStep(2);
+        }
         
         selectedNotes = Array.from(checkboxes)
             .filter(cb => cb.checked)
@@ -272,23 +326,36 @@
         const renderedContent = marked.parse(supernote.Sum || '');
         
         preview.innerHTML = `
-            <div class="supernote-card">
-                <div class="supernote-header">
+            <div class="supernote-final">
+                <div class="final-header">
+                    <div class="success-icon">
+                        <i class="fas fa-check-circle"></i>
+                    </div>
                     <h3>${escapeHtml(supernote.Header || 'Super Note')}</h3>
-                    <div class="supernote-meta">
-                        <span><strong>Topic:</strong> ${escapeHtml(supernote.Topic || '')}</span>
-                        <span><strong>Created:</strong> ${supernote.DateTime || ''}</span>
-                        <span><strong>Sources:</strong> ${selectedNotes.length} notes</span>
+                    <div class="creation-stats">
+                        <span class="stat-item">
+                            <i class="fas fa-calendar"></i>
+                            ${supernote.DateTime || ''}
+                        </span>
+                        <span class="stat-item">
+                            <i class="fas fa-files"></i>
+                            Combined from ${selectedNotes.length} notes
+                        </span>
+                        <span class="stat-item">
+                            <i class="fas fa-tag"></i>
+                            ${escapeHtml(supernote.Topic || '')}
+                        </span>
                     </div>
                 </div>
-                <div class="supernote-content">
+                <div class="final-content">
                     ${renderedContent}
                 </div>
             </div>
         `;
         
         preview.style.display = 'block';
-        document.getElementById('saveSuperNoteBtn').style.display = 'inline-block';
+        document.getElementById('saveSuperNoteBtn').style.display = 'flex';
+        updateProgressStep(3);
     }
 
     // Save Super Note (it's already saved, just show success)
@@ -299,10 +366,22 @@
 
     // Navigation between steps
     function showStep(stepNumber) {
-        document.querySelectorAll('.step-section').forEach(section => {
-            section.style.display = 'none';
+        document.querySelectorAll('.wizard-step').forEach(step => {
+            step.classList.add('hidden');
         });
-        document.getElementById(`step${stepNumber}`).style.display = 'block';
+        document.getElementById(`step${stepNumber}`).classList.remove('hidden');
+        updateProgressStep(stepNumber);
+    }
+    
+    // Update progress bar
+    function updateProgressStep(stepNumber) {
+        document.querySelectorAll('.progress-step').forEach((step, index) => {
+            if (index + 1 <= stepNumber) {
+                step.classList.add('active');
+            } else {
+                step.classList.remove('active');
+            }
+        });
     }
 
     // Event listeners
@@ -354,54 +433,374 @@
         div.textContent = text;
         return div.innerHTML;
     }
+    
+    function countWords(text) {
+        return text.trim() ? text.trim().split(/\s+/).length : 0;
+    }
 </script>
 {% endblock %}
 
 {% block extra_css %}
 <style>
-.supernote-container {
-    max-width: 800px;
+.supernote-wizard {
+    max-width: 900px;
     margin: 0 auto;
+    padding: 20px;
 }
 
-.step-section {
+.progress-container {
+    margin-bottom: 40px;
+}
+
+.progress-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.progress-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.step-circle {
+    background: var(--primary-light);
+    color: white;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+    border: 3px solid var(--primary-light);
+}
+
+.progress-step.active .step-circle {
+    border-color: var(--success-color);
+    background: var(--success-color);
+}
+
+.step-label {
+    margin-top: 8px;
+    color: var(--text-light);
+    font-weight: 500;
+    text-align: center;
+}
+
+.progress-line {
+    height: 3px;
+    flex-grow: 1;
+    background: var(--border-color);
+    margin: 0 8px;
+}
+
+.progress-step.active + .progress-line {
+    background: var(--success-color);
+    height: 3px;
+}
+
+.wizard-step {
+    display: block;
+}
+
+.wizard-step.hidden {
+    display: none;
+}
+
+.step-card {
     background: var(--card-bg);
     border-radius: 12px;
-    padding: 30px;
+    padding: 20px 30px;
     box-shadow: var(--shadow);
-    margin-bottom: 20px;
-}
-
-.step-header {
-    margin-bottom: 25px;
     text-align: center;
-    padding-bottom: 15px;
-    border-bottom: 2px solid var(--primary-color);
 }
 
-.step-header h3 {
+.step-card.wide {
+    text-align: left;
+}
+
+.card-icon {
+    font-size: 3rem;
     color: var(--primary-color);
-    margin-bottom: 8px;
-    font-size: 1.5rem;
-    font-weight: 700;
-}
-
-.step-header p {
-    color: var(--text-light);
-    margin: 0;
-    font-size: 1rem;
-}
-
-.form-group {
     margin-bottom: 20px;
 }
 
-.form-group label {
-    display: block;
-    margin-bottom: 8px;
+.topic-selector {
+    margin: 30px 0;
+}
+
+.select-wrapper {
+    position: relative;
+    display: inline-block;
+    width: 100%;
+}
+
+.modern-select {
+    width: 100%;
+    padding: 12px;
+    font-size: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    appearance: none;
+    background: var(--card-bg);
+    color: var(--text-color);
+    transition: border-color 0.2s;
+}
+
+.modern-select:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+}
+
+.select-arrow {
+    position: absolute;
+    right: 18px;
+    top: calc(50% - 0.5em);
+    pointer-events: none;
+}
+
+.btn-next, .btn-back, .btn-save {
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    text-decoration: none;
+    margin-top: 30px;
+
+}
+
+.btn-next:hover, .btn-back:hover, .btn-save:hover {
+    background: var(--primary-dark);
+    transform: translateY(-1px);
+}
+
+.btn-back {
+    background: var(--surface-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    margin-right: 10px;
+}
+
+.selection-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--border-color);
+    margin-bottom: 20px;
+}
+
+.selection-toolbar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+}
+
+.btn-tool {
+    background: var(--hover-color);
+    color: var(--text-color);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9rem;
     font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn-tool:hover {
+    background: var(--primary-color);
+    color: white;
+}
+
+.notes-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.note-card-modern {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    transition: transform 0.2s, box-shadow 0.2s;
+    cursor: pointer;
+}
+
+.note-card-modern:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-lg);
+}
+
+.note-card-header {
+    background: var(--primary-light);
+    color: white;
+    padding: 10px;
+    display: flex;
+    align-items: center;
+}
+
+.checkbox-container {
+    position: relative;
+    margin-right: 15px;
+}
+
+.note-checkbox {
+    opacity: 0;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+}
+
+.checkbox-custom {
+    width: 18px;
+    height: 18px;
+    border-radius: 4px;
+    border: 2px solid white;
+    background-color: transparent;
+    display: inline-block;
+}
+
+.note-checkbox:checked + .checkbox-custom {
+    background-color: white;
+}
+
+.note-title-area {
+    flex: 1;
+}
+
+.note-title {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: bold;
+    color: white;
+}
+
+.note-meta-row {
+    display: flex;
+    gap: 15px;
+    font-size: 0.85rem;
+    margin-top: 5px;
+}
+
+.meta-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.note-content {
+    padding: 15px;
+}
+
+.content-preview {
+    font-size: 0.95rem;
+    color: var(--text-light);
+    margin-bottom: 10px;
+}
+
+.content-stats {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+}
+
+.word-count, .topic-tag {
+    color: var(--text-light);
+}
+
+.preview-header {
+    text-align: center;
+    padding-bottom: 20px;
+    border-bottom: 2px solid var(--border-color);
+}
+
+.loading-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    padding: 40px;
+}
+
+.loading-animation {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.spinner-modern {
+    border: 4px solid var(--border-color);
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 20px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.supernote-final {
+    padding: 20px;
+    background: var(--surface-color);
+    border-radius: 10px;
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow);
+}
+
+.final-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.success-icon {
+    color: var(--success-color);
+    font-size: 2rem;
+    margin-right: 15px;
+}
+
+.creation-stats {
+    display: flex;
+    gap: 20px;
+    font-size: 0.85rem;
+    flex-wrap: wrap;
+}
+
+.stat-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.final-content {
+    margin-top: 20px;
+    line-height: 1.6;
     color: var(--text-color);
 }
+</style>
+{% endblock %}
 
 .form-select {
     width: 100%;
