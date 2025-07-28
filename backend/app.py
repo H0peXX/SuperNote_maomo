@@ -41,6 +41,10 @@ def view_summary(summary_id):
 def edit_summary(summary_id):
     return render_template('edit_summary.html')
 
+@app.route('/create-supernote')
+def create_supernote():
+    return render_template('create_supernote.html')
+
 # Register blueprints for API routes
 app.register_blueprint(user_bp)
 app.register_blueprint(team_bp)
