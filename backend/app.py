@@ -29,6 +29,10 @@ def dashboard():
 def create_summary():
     return render_template('create_summary.html')
 
+@app.route('/create-text-summary')
+def create_text_summary():
+    return render_template('create_text_summary.html')
+
 @app.route('/view-summary/<summary_id>')
 def view_summary(summary_id):
     return render_template('view_summary.html')

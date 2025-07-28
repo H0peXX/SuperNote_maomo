@@ -349,7 +349,8 @@ def save():
             "Sum": summary,
             "Provider": provider,
             "DateTime": current_date,
-            "LastUpdate": current_date
+            "LastUpdate": current_date,
+            "favorite": False
         }
         
         # Save to MongoDB
@@ -420,7 +421,8 @@ def make_supernote():
             "Sum": supernote_sum,
             "Provider": combined_provider,
             "DateTime": current_date,
-            "LastUpdate": current_date
+            "LastUpdate": current_date,
+            "favorite": False
         }
         # Insert and get inserted_id
         result = super_note_collection.insert_one(supernote_doc)
@@ -539,7 +541,7 @@ def update_supernote(supernote_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-# --- Create summary from text input (simplified version) ---
+# --- Create summary from file upload ---
 @note_bp.route('/api/create-summary', methods=['POST'])
 @cross_origin()
 def create_summary():
@@ -552,6 +554,11 @@ def create_summary():
         if not title:
             return jsonify({'error': 'Title is required'}), 400
             
+        # Get username from auth token
+        username = get_username_from_token(request)
+        if not username:
+            return jsonify({'error': 'Authentication required'}), 401
+            
         # For demo purposes, create a simple summary
         # In a real implementation, you'd process the uploaded files
         sample_text = f"This is a summary for '{title}'. Files uploaded: {len(files)} files."
@@ -562,7 +569,6 @@ def create_summary():
         summary = response.text
         
         current_date = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
-        username = 'Current User'  # In real app, get from auth token
         
         # Create document
         note = {
@@ -571,7 +577,8 @@ def create_summary():
             "Sum": summary,
             "Provider": username,
             "DateTime": current_date,
-            "LastUpdate": current_date
+            "LastUpdate": current_date,
+            "favorite": False
         }
         
         # Save to MongoDB
@@ -581,6 +588,121 @@ def create_summary():
         return jsonify({"message": "Summary created successfully!", "summary": mongo_to_json(note)})
     except Exception as e:
         return jsonify({"error": f"Error creating summary: {str(e)}"}), 500
+
+# --- Create summary from text input ---
+@note_bp.route('/api/create-text-summary', methods=['POST'])
+@cross_origin()
+def create_text_summary():
+    try:
+        data = request.get_json()
+        title = data.get('title')
+        text = data.get('text')
+        
+        if not title or not text:
+            return jsonify({'error': 'Title and text are required'}), 400
+            
+        # Get username from auth token
+        username = get_username_from_token(request)
+        if not username:
+            return jsonify({'error': 'Authentication required'}), 401
+        
+        # Generate summary using Gemini
+        system_prompt = "Your job is to summarize the provided text in a clear and concise way, maintaining the key points."
+        structure_output = "Respond in text format only, without any additional formatting or HTML tags."
+        response = model.generate_content(f"{system_prompt} {structure_output} {text}")
+        summary = response.text
+        
+        current_date = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+        
+        # Create document
+        note = {
+            "Header": title,
+            "Topic": "General",
+            "Sum": summary,
+            "Provider": username,
+            "DateTime": current_date,
+            "LastUpdate": current_date,
+            "favorite": False
+        }
+        
+        # Save to MongoDB
+        result = note_collection.insert_one(note)
+        note['_id'] = str(result.inserted_id)
+        
+        return jsonify({"message": "Summary created successfully!", "summary": mongo_to_json(note)})
+    except Exception as e:
+        return jsonify({"error": f"Error creating summary: {str(e)}"}), 500
+
+# --- Toggle favorite status for note ---
+@note_bp.route('/api/note/<note_id>/favorite', methods=['POST'])
+@cross_origin()
+def toggle_note_favorite(note_id):
+    try:
+        username = get_username_from_token(request)
+        if not username:
+            return jsonify({'error': 'Authentication required'}), 401
+            
+        note = note_collection.find_one({'_id': ObjectId(note_id)})
+        if not note:
+            return jsonify({'error': 'Note not found'}), 404
+            
+        # Toggle favorite status
+        current_favorite = note.get('favorite', False)
+        new_favorite = not current_favorite
+        
+        result = note_collection.update_one(
+            {'_id': ObjectId(note_id)},
+            {'$set': {'favorite': new_favorite}}
+        )
+        
+        if result.matched_count > 0:
+            return jsonify({'success': True, 'favorite': new_favorite})
+        else:
+            return jsonify({'error': 'Failed to update favorite status'}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# --- Toggle favorite status for supernote ---
+@super_note_bp.route('/api/supernote/<supernote_id>/favorite', methods=['POST'])
+@cross_origin()
+def toggle_supernote_favorite(supernote_id):
+    try:
+        username = get_username_from_token(request)
+        if not username:
+            return jsonify({'error': 'Authentication required'}), 401
+            
+        supernote = super_note_collection.find_one({'_id': ObjectId(supernote_id)})
+        if not supernote:
+            return jsonify({'error': 'Supernote not found'}), 404
+            
+        # Toggle favorite status
+        current_favorite = supernote.get('favorite', False)
+        new_favorite = not current_favorite
+        
+        result = super_note_collection.update_one(
+            {'_id': ObjectId(supernote_id)},
+            {'$set': {'favorite': new_favorite}}
+        )
+        
+        if result.matched_count > 0:
+            return jsonify({'success': True, 'favorite': new_favorite})
+        else:
+            return jsonify({'error': 'Failed to update favorite status'}), 500
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
+# Helper function to get username from authentication token
+def get_username_from_token(request):
+    try:
+        auth_header = request.headers.get('Authorization')
+        if not auth_header or not auth_header.startswith('Bearer '):
+            return None
+        
+        token = auth_header.split(' ')[1]
+        decoded = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        return decoded.get('sub')
+    except:
+        return None
 
 # Helper function to convert MongoDB ObjectId to string
 def mongo_to_json(doc):
