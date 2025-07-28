@@ -43,6 +43,8 @@
 
 {% block scripts %}
 {{ super() }}
+<!-- Include marked.js for markdown rendering -->
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
     let currentSummary = null;
     
@@ -114,7 +116,12 @@
         
         // Update content
         document.getElementById('summaryTitle').textContent = summary.Header || 'Untitled Summary';
-        document.getElementById('summaryText').textContent = summary.Sum || 'No content available';
+        
+        // Render markdown in summary content
+        const summaryContent = summary.Sum || 'No content available';
+        const renderedContent = marked.parse(summaryContent);
+        document.getElementById('summaryText').innerHTML = renderedContent;
+        
         document.getElementById('summaryProvider').textContent = summary.Provider || 'Unknown';
         
         // Format and display date

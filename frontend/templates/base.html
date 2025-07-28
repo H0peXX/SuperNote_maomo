@@ -6,6 +6,71 @@
     <title>{% block title %}SuperNote{% endblock %}</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .summary-options {
+            position: relative;
+        }
+        
+        .btn-summary.dropdown-toggle {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            background: none;
+            border: none;
+            color: inherit;
+            cursor: pointer;
+            padding: 12px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+        }
+        
+        .dropdown-arrow {
+            margin-left: 8px;
+            font-size: 12px;
+            transition: transform 0.2s;
+        }
+        
+        .dropdown-menu {
+            position: absolute;
+            bottom: 100%;
+            left: 0;
+            right: 0;
+            background: var(--surface-color, #fff);
+            border: 1px solid var(--border-color, #ddd);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            display: none;
+            z-index: 1000;
+            margin-bottom: 8px;
+        }
+        
+        .dropdown-menu.show {
+            display: block;
+        }
+        
+        .dropdown-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            color: var(--text-color, #333);
+            text-decoration: none;
+            transition: background-color 0.2s;
+        }
+        
+        .dropdown-item:hover {
+            background: var(--hover-color, #f5f5f5);
+        }
+        
+        .dropdown-item i {
+            margin-right: 8px;
+            width: 16px;
+        }
+        
+        .dropdown-menu.show .dropdown-arrow {
+            transform: rotate(180deg);
+        }
+    </style>
 </head>
 <body>
     <div class="app-container">
@@ -43,10 +108,23 @@
             </nav>
             
             <div class="sidebar-footer">
-                <a href="/create-summary" class="btn-summary">
-                    <i class="fas fa-plus"></i>
-                    Summary
-                </a>
+                <div class="summary-options">
+                    <button class="btn-summary dropdown-toggle" id="summaryDropdown">
+                        <i class="fas fa-plus"></i>
+                        Summary
+                        <i class="fas fa-chevron-down dropdown-arrow"></i>
+                    </button>
+                    <div class="dropdown-menu" id="summaryMenu">
+                        <a href="/create-summary" class="dropdown-item">
+                            <i class="fas fa-file-upload"></i>
+                            From Files
+                        </a>
+                        <a href="/create-text-summary" class="dropdown-item">
+                            <i class="fas fa-keyboard"></i>
+                            From Text
+                        </a>
+                    </div>
+                </div>
             </div>
         </aside>
         {% endblock %}
@@ -111,6 +189,24 @@
             localStorage.removeItem('token');
             localStorage.removeItem('username');
             window.location.href = '/login';
+        }
+        
+        // Summary dropdown functionality
+        const summaryDropdown = document.getElementById('summaryDropdown');
+        const summaryMenu = document.getElementById('summaryMenu');
+        
+        if (summaryDropdown && summaryMenu) {
+            summaryDropdown.addEventListener('click', function(e) {
+                e.preventDefault();
+                summaryMenu.classList.toggle('show');
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!summaryDropdown.contains(e.target)) {
+                    summaryMenu.classList.remove('show');
+                }
+            });
         }
     </script>
     {% endblock %}

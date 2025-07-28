@@ -570,6 +570,8 @@ body {
 .summary-content {
     font-size: 1rem;
     line-height: 1.7;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
     color: var(--text-color);
     margin-bottom: 25px;
 }
@@ -622,7 +624,26 @@ body {
     box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
 }
 
-/* Buttons */
+.summary-content ul, .summary-content ol {
+    margin: 10px 0 10px 20px;
+}
+
+.summary-content li {
+    margin-bottom: 5px;
+}
+
+.summary-content h1, .summary-content h2, .summary-content h3, .summary-content h4, .summary-content h5, .summary-content h6 {
+    margin: 10px 0;
+}
+
+.summary-content p {
+    margin: 10px 0;
+}
+
+.summary-content strong {
+    color: var(--text-color);
+    font-weight: bold;
+}
 .btn-save {
     background: var(--success-color);
     color: white;

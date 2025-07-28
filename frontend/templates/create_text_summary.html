@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+
+{% block title %}Create Text Summary - SuperNote{% endblock %}
+
+{% block page_title %}Create Text Summary{% endblock %}
+
+{% block content %}
+<div class="form-container">
+    <form id="create-text-summary-form" class="edit-form">
+        <input type="text" id="title" class="title-input" placeholder="Summary Title" required>
+        
+        <div class="text-input-section">
+            <label for="textInput" class="input-label">Enter text to summarize:</label>
+            <textarea id="textInput" class="text-input" placeholder="Paste your text here..." rows="10" required></textarea>
+        </div>
+        
+        <div class="form-actions">
+            <button type="button" class="btn-secondary" onclick="window.location.href='/create-summary'">Use File Upload Instead</button>
+            <button type="submit" class="btn-primary">Create Summary</button>
+        </div>
+    </form>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+    document.getElementById('create-text-summary-form').addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const title = document.getElementById('title').value.trim();
+        const text = document.getElementById('textInput').value.trim();
+
+        if (!title || !text) {
+            alert('Please provide both a title and text to summarize.');
+            return;
+        }
+
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch('/api/create-text-summary', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    title: title,
+                    text: text
+                })
+            });
+
+            if (response.ok) {
+                alert('Summary created successfully!');
+                window.location.href = '/dashboard';
+            } else {
+                const error = await response.json();
+                alert(`Failed to create summary: ${error.error || 'Unknown error'}`);
+            }
+        } catch (error) {
+            console.error('Error creating summary:', error);
+            alert('Error creating summary.');
+        }
+    });
+</script>
+
+<style>
+.text-input-section {
+    margin: 20px 0;
+}
+
+.input-label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 500;
+    color: var(--text-color);
+}
+
+.text-input {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.5;
+    resize: vertical;
+    min-height: 200px;
+}
+
+.text-input:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.1);
+}
+
+.form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+.btn-secondary {
+    background: var(--surface-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-secondary:hover {
+    background: var(--hover-color);
+}
+</style>
+{% endblock %}

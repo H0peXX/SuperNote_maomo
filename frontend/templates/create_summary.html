@@ -15,7 +15,11 @@
             <input type="file" id="fileInput" class="file-input" accept=".pdf,image/*" multiple>
         </div>
         <div class="file-list" id="fileList"></div>
-        <button type="submit" class="btn-primary">Create Summary</button>
+        
+        <div class="form-actions">
+            <button type="button" class="btn-secondary" onclick="window.location.href='/create-text-summary'">Use Text Input Instead</button>
+            <button type="submit" class="btn-primary">Create Summary</button>
+        </div>
     </form>
 </div>
 {% endblock %}
@@ -102,4 +106,28 @@
         }
     });
 </script>
+
+<style>
+.form-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    margin-top: 20px;
+}
+
+.btn-secondary {
+    background: var(--surface-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    padding: 12px 24px;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+}
+
+.btn-secondary:hover {
+    background: var(--hover-color);
+}
+</style>
 {% endblock %}
