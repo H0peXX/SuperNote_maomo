@@ -111,6 +111,14 @@
             case 'favorites':
                 filteredSummaries = filteredSummaries.filter(s => s.favorite);
                 break;
+            case 'recent-supernotes':
+                filteredSummaries = filteredSummaries.filter(s => s.type === 'supernote');
+                filteredSummaries.sort((a, b) => parseCustomDate(b.date) - parseCustomDate(a.date));
+                break;
+            case 'favorite-supernotes':
+                filteredSummaries = filteredSummaries.filter(s => s.type === 'supernote' && s.favorite);
+                filteredSummaries.sort((a, b) => parseCustomDate(b.date) - parseCustomDate(a.date));
+                break;
         }
         
         if (filteredSummaries.length === 0) {
@@ -270,9 +278,9 @@
                 let dropdownFilter = filter;
                 if (filter === 'favorite') {
                     dropdownFilter = 'favorites';
-                } else if (filter === 'recent-summary' || filter === 'favorite-summary') {
-                    // For summary-specific filters, use 'recent' or 'favorites'
-                    dropdownFilter = filter.includes('favorite') ? 'favorites' : 'recent';
+                } else if (filter === 'recent-supernotes' || filter === 'favorite-supernotes') {
+                    // For super notes filters, keep the specific filter
+                    dropdownFilter = filter;
                 }
                 
                 currentFilter = dropdownFilter;
