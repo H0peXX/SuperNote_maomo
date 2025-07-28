@@ -318,8 +318,8 @@ def summarize():
         if not text:
             return jsonify({'error': 'Please enter some text to summarize.'}), 400
         
-        system_prompt = "Your job is to summarize the provided text in a clear and concise way, maintaining the key points."
-        structure_output = "Respond in text format only, without any additional formatting or HTML tags."
+        system_prompt = "Extract and organize the key information from the provided text."
+        structure_output = "Provide ONLY the summary content as bullet points using markdown format. Do not include any introductory phrases like 'This text is about', 'Here is a summary', etc. Start directly with the first bullet point. Use clear, concise language optimized for quick review."
         
         # Generate summary using Gemini
         response = model.generate_content(f"{system_prompt}{structure_output}{text}")
@@ -409,8 +409,8 @@ def make_supernote():
         combined_topic = notes[0].get('Topic', '') if notes else ''
         combined_provider = ', '.join([n.get('Provider', '') for n in notes])
         # Summarize and correct with Gemini
-        system_prompt = "Your job is combine and summarize the provided text in a clear and concise way, maintaining the key points."
-        structure_output = "Respond in text format only, without any additional formatting or HTML tags."
+        system_prompt = "Combine and synthesize the provided texts into a consolidated knowledge summary."
+        structure_output = "Provide ONLY the summary content as organized bullet points using markdown format. Do not include introductory phrases or explanations. Start directly with the content. Use clear categories and prioritize key information for review."
         prompt = f"{system_prompt} {structure_output}'{combined_topic}': {combined_sum}"
         response = model.generate_content(prompt)
         supernote_sum = response.text
@@ -564,8 +564,9 @@ def create_summary():
         sample_text = f"This is a summary for '{title}'. Files uploaded: {len(files)} files."
         
         # Generate summary using Gemini
-        system_prompt = "Create a brief summary based on the provided information."
-        response = model.generate_content(f"{system_prompt} {sample_text}")
+        system_prompt = "Extract key points, important information, and relevant insights from the provided content."
+        structure_output = "Provide ONLY the summary content as bullet points using markdown format. Do not include any introductory phrases. Start directly with the content organized for easy scanning and review."
+        response = model.generate_content(f"{system_prompt} {structure_output} {sample_text}")
         summary = response.text
         
         current_date = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
@@ -607,8 +608,8 @@ def create_text_summary():
             return jsonify({'error': 'Authentication required'}), 401
         
         # Generate summary using Gemini
-        system_prompt = "Your job is to summarize the provided text in a clear and concise way, maintaining the key points."
-        structure_output = "Respond in text format only, without any additional formatting or HTML tags."
+        system_prompt = "Extract key concepts, important details, and actionable insights from the provided text."
+        structure_output = "Provide ONLY the summary content as bullet points using markdown format. Do not include any introductory text or phrases. Start directly with the first bullet point. Organize by topic or importance for easy scanning."
         response = model.generate_content(f"{system_prompt} {structure_output} {text}")
         summary = response.text
         
