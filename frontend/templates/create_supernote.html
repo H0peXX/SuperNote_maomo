@@ -369,16 +369,21 @@
 .step-header {
     margin-bottom: 25px;
     text-align: center;
+    padding-bottom: 15px;
+    border-bottom: 2px solid var(--primary-color);
 }
 
 .step-header h3 {
-    color: var(--text-color);
+    color: var(--primary-color);
     margin-bottom: 8px;
+    font-size: 1.5rem;
+    font-weight: 700;
 }
 
 .step-header p {
     color: var(--text-light);
     margin: 0;
+    font-size: 1rem;
 }
 
 .form-group {
@@ -413,7 +418,9 @@
     gap: 12px;
     align-items: center;
     margin-bottom: 20px;
-    padding-bottom: 15px;
+    padding: 15px;
+    background: var(--bg-color);
+    border-radius: 8px;
     border-bottom: 1px solid var(--border-color);
 }
 
@@ -428,11 +435,12 @@
     overflow-y: auto;
     border: 1px solid var(--border-color);
     border-radius: 8px;
-    padding: 10px;
+    padding: 15px;
+    background: var(--bg-color);
 }
 
 .note-card {
-    margin-bottom: 12px;
+    margin-bottom: 15px;
 }
 
 .note-checkbox-container {
@@ -451,7 +459,8 @@
     flex: 1;
     display: block;
     padding: 15px;
-    background: var(--surface-color);
+    background: var(--card-bg);
+    box-shadow: var(--shadow);
     border: 1px solid var(--border-color);
     border-radius: 8px;
     cursor: pointer;
@@ -459,8 +468,10 @@
 }
 
 .note-card-content:hover {
-    background: var(--hover-color);
+    background: var(--bg-color);
     border-color: var(--primary-color);
+    box-shadow: var(--shadow-lg);
+    transform: translateY(-1px);
 }
 
 .note-header {
@@ -474,6 +485,7 @@
     margin: 0;
     color: var(--text-color);
     font-size: 1.1rem;
+    font-weight: 600;
 }
 
 .note-date {
@@ -505,6 +517,9 @@
     text-align: center;
     padding: 40px;
     color: var(--text-light);
+    background: var(--bg-color);
+    border-radius: 8px;
+    margin: 20px 0;
 }
 
 .loading-state .spinner {
@@ -524,13 +539,15 @@
 
 .supernote-header {
     padding: 20px;
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+    background: var(--primary-light);
     color: white;
 }
 
 .supernote-header h3 {
     margin: 0 0 10px 0;
     color: white;
+    font-weight: 700;
+    font-size: 1.4rem;
 }
 
 .supernote-meta {
@@ -578,6 +595,7 @@
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    box-shadow: var(--shadow-lg);
 }
 
 .btn-success:hover {
