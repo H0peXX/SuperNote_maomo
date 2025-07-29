@@ -9,3 +9,8 @@ bcrypt
 PyJWT
 google-generativeai
 requests
+pytesseract
+opencv-python
+Pillow
+PyPDF2
+pdf2image

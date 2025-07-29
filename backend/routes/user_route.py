@@ -9,7 +9,17 @@ import os
 from flask_cors import cross_origin
 import google.generativeai as genai
 from dotenv import load_dotenv
+import pytesseract
+from pdf2image import convert_from_path
+from PyPDF2 import PdfReader
+import tempfile
 load_dotenv()
+
+# Configure Tesseract OCR path for Windows
+pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+
+# Configure Poppler path for pdf2image
+os.environ['POPPLER_PATH'] = r'C:\poppler\poppler-24.08.0\Library\bin'
 
 
 # Gemini setup with 2.5-flash model
@@ -559,14 +569,42 @@ def create_summary():
         if not username:
             return jsonify({'error': 'Authentication required'}), 401
             
-        # For demo purposes, create a simple summary
-        # In a real implementation, you'd process the uploaded files
-        sample_text = f"This is a summary for '{title}'. Files uploaded: {len(files)} files."
+# Process uploaded PDF files
+        full_text = ""
         
-        # Generate summary using Gemini
+        if not files:
+            return jsonify({'error': 'No files uploaded'}), 400
+        
+        for file in files:
+            if not file.filename.endswith('.pdf'):
+                return jsonify({'error': 'Only PDF files are supported for OCR.'}), 400
+            
+            # Save uploaded file temporarily
+            with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
+                file.save(temp_file.name)
+                temp_path = temp_file.name
+            
+            try:
+                # Convert PDF pages to images
+                pages = convert_from_path(temp_path, 500, poppler_path=r'C:\poppler\poppler-24.08.0\Library\bin')
+                for page in pages:
+                    # Perform OCR on each image
+                    text = pytesseract.image_to_string(page)
+                    full_text += text + "\n"
+            except Exception as ocr_error:
+                return jsonify({'error': f'Error processing PDF: {str(ocr_error)}'}), 500
+            finally:
+                # Clean up temporary file
+                if os.path.exists(temp_path):
+                    os.unlink(temp_path)
+        
+        if not full_text.strip():
+            return jsonify({'error': 'No text could be extracted from the PDF files'}), 400
+        
+        # Generate summary using the extracted text
         system_prompt = "Extract key points, important information, and relevant insights from the provided content."
         structure_output = "Provide ONLY the summary content as bullet points using markdown format. Do not include any introductory phrases. Start directly with the content organized for easy scanning and review."
-        response = model.generate_content(f"{system_prompt} {structure_output} {sample_text}")
+        response = model.generate_content(f"{system_prompt} {structure_output} {full_text}")
         summary = response.text
         
         current_date = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
