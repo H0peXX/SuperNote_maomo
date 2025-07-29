@@ -292,14 +292,20 @@ def summarize():
     try:
         data = request.get_json()
         text = data.get('text')
+        option_prompt = data.get('optionPrompt', '') 
         if not text:
             return jsonify({'error': 'Please enter some text to summarize.'}), 400
         
         system_prompt = "Your job is to summarize the provided text in a clear and concise way, maintaining the key points."
         structure_output = "Respond in text format only, without any additional formatting or HTML tags."
-        
-        # Generate summary using Gemini
-        response = model.generate_content(f"{system_prompt}{structure_output}{text}")
+        prompt = (
+        f"{system_prompt}\n\n"
+        f"{structure_output}\n\n"
+        f"{text}\n\n"
+        f"This is the user's option: {option_prompt}.\n"
+        "If the option relates to input formatting or instructions, please follow it."
+        )
+        response = model.generate_content(prompt)
         summary = response.text
         return jsonify({'summary': summary})
     except Exception as e:
@@ -497,6 +503,3 @@ def delete_supernote(id):
         return jsonify({'success': False, 'error': str(e)}), 500
 
  
-
-
-
