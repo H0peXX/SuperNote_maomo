@@ -103,7 +103,7 @@ CORS(member_bp, resources={
 CORS(note_bp, resources={
     r"/api/*": {
         "origins": ["http://localhost:8000", "http://localhost:5000"],
-        "methods": ["GET", "POST", "OPTIONS"],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": [
             "Content-Type",
             "Authorization",
@@ -120,7 +120,7 @@ CORS(note_bp, resources={
 CORS(super_note_bp, resources={
     r"/api/*": {
         "origins": ["http://localhost:8000", "http://localhost:5000"],
-        "methods": ["GET", "POST", "OPTIONS"],
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
         "allow_headers": [
             "Content-Type",
             "Authorization",
@@ -702,17 +702,30 @@ def toggle_note_favorite(note_id):
         return jsonify({'error': str(e)}), 500
 
 # --- Delete supernote by ID ---
-@super_note_bp.route('/api/supernote/<supernote_id>/delete', methods=['DELETE'])
+@super_note_bp.route('/api/supernote/<supernote_id>', methods=['DELETE'])
 @cross_origin()
 def delete_supernote(supernote_id):
     try:
-        result = super_note_collection.delete_one({'_id': ObjectId(supernote_id)})
-        if result.deleted_count == 1:
-            return jsonify({'success': True})
-        else:
+        # Validate ObjectId format
+        if not ObjectId.is_valid(supernote_id):
+            return jsonify({'success': False, 'error': 'Invalid supernote ID format'}), 400
+            
+        # Check if supernote exists before deletion
+        supernote = super_note_collection.find_one({'_id': ObjectId(supernote_id)})
+        if not supernote:
             return jsonify({'success': False, 'error': 'Supernote not found'}), 404
+            
+        # Delete the supernote
+        result = super_note_collection.delete_one({'_id': ObjectId(supernote_id)})
+        
+        if result.deleted_count == 1:
+            return jsonify({'success': True, 'message': 'Supernote deleted successfully'})
+        else:
+            return jsonify({'success': False, 'error': 'Failed to delete supernote'}), 500
+            
     except Exception as e:
-        return jsonify({'success': False, 'error': str(e)}), 500
+        print(f"Error deleting supernote {supernote_id}: {str(e)}")  # Log the error
+        return jsonify({'success': False, 'error': f'Error deleting supernote: {str(e)}'}), 500
 
 
 
