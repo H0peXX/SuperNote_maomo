@@ -1,76 +1,3 @@
-
-# --- Extract text and generate summary for review ---
-@note_bp.route('/api/extract-and-summarize', methods=['POST'])
-@cross_origin()
-def extract_and_summarize():
-    try:
-        title = request.form.get('title')
-        files = request.files.getlist('files')
-
-        if not title or not files:
-            return jsonify({'error': 'Title and files are required'}), 400
-
-        # Initialize OCR and text extraction logic from create_summary
-        full_text = ""
-        try:
-            from ocr.typhoon_ocr_service import typhoon_ocr_service
-            use_typhoon_ocr = typhoon_ocr_service.is_available()
-            if not use_typhoon_ocr:
-                print("Typhoon OCR service not properly configured, falling back to Tesseract")
-        except (ImportError, ValueError) as e:
-            print(f"Typhoon OCR not available, falling back to Tesseract: {e}")
-            use_typhoon_ocr = False
-
-        for file in files:
-            allowed_extensions = ['.pdf', '.png', '.jpg', '.jpeg']
-            if not any(file.filename.lower().endswith(ext) for ext in allowed_extensions):
-                return jsonify({'error': 'Only PDF, PNG, JPG, JPEG files are supported.'}), 400
-
-            try:
-                if file.filename.lower().endswith('.pdf'):
-                    use_typhoon_ocr = False
-                
-                if use_typhoon_ocr:
-                    extracted_text = typhoon_ocr_service.process_uploaded_file(
-                        file, file.filename, task_type="default"
-                    )
-                    full_text += extracted_text + "\n"
-                else:
-                    if not file.filename.lower().endswith('.pdf'):
-                        return jsonify({'error': 'Typhoon OCR is not configured. Image files require Typhoon OCR. Please configure TYPHOON_API_KEY or use PDF files.'}), 400
-                    
-                    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
-                        file.save(temp_file.name)
-                        temp_path = temp_file.name
-                    
-                    try:
-                        pages = convert_from_path(temp_path, 500, poppler_path=r'C:\poppler\poppler-24.08.0\Library\bin')
-                        for page in pages:
-                            text = pytesseract.image_to_string(page)
-                            full_text += text + "\n"
-                    finally:
-                        if os.path.exists(temp_path):
-                            os.unlink(temp_path)
-            except Exception as ocr_error:
-                return jsonify({'error': f'Error processing file {file.filename}: {str(ocr_error)}'}), 500
-
-        if not full_text.strip():
-            return jsonify({'error': 'No text could be extracted from the files'}), 400
-
-        # Generate initial summary
-        system_prompt = "Extract key points, important information, and relevant insights from the provided content."
-        structure_output = "Provide ONLY the summary content as bullet points using markdown format. Do not include any introductory phrases. Start directly with the content organized for easy scanning and review."
-        response = model.generate_content(f"{system_prompt} {structure_output} {full_text}")
-        summary = response.text
-
-        return jsonify({
-            'extracted_text': full_text,
-            'summary': summary
-        })
-
-    except Exception as e:
-        return jsonify({'error': f'Error extracting text and summarizing: {str(e)}'}), 500
-
 from bson import ObjectId
 from flask import Blueprint, jsonify, request, render_template
 from datetime import datetime
@@ -623,6 +550,78 @@ def update_supernote(supernote_id):
             return jsonify({'error': 'Supernote not found'}), 404
     except Exception as e:
         return jsonify({'error': str(e)}), 500
+
+# --- Extract text and generate summary for review ---
+@note_bp.route('/api/extract-and-summarize', methods=['POST'])
+@cross_origin()
+def extract_and_summarize():
+    try:
+        title = request.form.get('title')
+        files = request.files.getlist('files')
+
+        if not title or not files:
+            return jsonify({'error': 'Title and files are required'}), 400
+
+        # Initialize OCR and text extraction logic from create_summary
+        full_text = ""
+        try:
+            from ocr.typhoon_ocr_service import typhoon_ocr_service
+            use_typhoon_ocr = typhoon_ocr_service.is_available()
+            if not use_typhoon_ocr:
+                print("Typhoon OCR service not properly configured, falling back to Tesseract")
+        except (ImportError, ValueError) as e:
+            print(f"Typhoon OCR not available, falling back to Tesseract: {e}")
+            use_typhoon_ocr = False
+
+        for file in files:
+            allowed_extensions = ['.pdf', '.png', '.jpg', '.jpeg']
+            if not any(file.filename.lower().endswith(ext) for ext in allowed_extensions):
+                return jsonify({'error': 'Only PDF, PNG, JPG, JPEG files are supported.'}), 400
+
+            try:
+                if file.filename.lower().endswith('.pdf'):
+                    use_typhoon_ocr = False
+                
+                if use_typhoon_ocr:
+                    extracted_text = typhoon_ocr_service.process_uploaded_file(
+                        file, file.filename, task_type="default"
+                    )
+                    full_text += extracted_text + "\n"
+                else:
+                    if not file.filename.lower().endswith('.pdf'):
+                        return jsonify({'error': 'Typhoon OCR is not configured. Image files require Typhoon OCR. Please configure TYPHOON_API_KEY or use PDF files.'}), 400
+                    
+                    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
+                        file.save(temp_file.name)
+                        temp_path = temp_file.name
+                    
+                    try:
+                        pages = convert_from_path(temp_path, 500, poppler_path=r'C:\poppler\poppler-24.08.0\Library\bin')
+                        for page in pages:
+                            text = pytesseract.image_to_string(page)
+                            full_text += text + "\n"
+                    finally:
+                        if os.path.exists(temp_path):
+                            os.unlink(temp_path)
+            except Exception as ocr_error:
+                return jsonify({'error': f'Error processing file {file.filename}: {str(ocr_error)}'}), 500
+
+        if not full_text.strip():
+            return jsonify({'error': 'No text could be extracted from the files'}), 400
+
+        # Generate initial summary
+        system_prompt = "Extract key points, important information, and relevant insights from the provided content."
+        structure_output = "Provide ONLY the summary content as bullet points using markdown format. Do not include any introductory phrases. Start directly with the content organized for easy scanning and review."
+        response = model.generate_content(f"{system_prompt} {structure_output} {full_text}")
+        summary = response.text
+
+        return jsonify({
+            'extracted_text': full_text,
+            'summary': summary
+        })
+
+    except Exception as e:
+        return jsonify({'error': f'Error extracting text and summarizing: {str(e)}'}), 500
 
 # --- Create summary from file upload ---
 @note_bp.route('/api/create-summary', methods=['POST'])
