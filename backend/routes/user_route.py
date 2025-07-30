@@ -704,7 +704,10 @@ def create_summary():
         system_prompt = "Extract key points, important information, and relevant insights from the provided content."
         structure_output = "Provide ONLY the summary content as bullet points using markdown format. Do not include any introductory phrases. Start directly with the content organized for easy scanning and review."
         response = model.generate_content(f"{system_prompt} {structure_output} {full_text}")
-        summary = response.text
+        summary = response.text.strip() if response.text else ""
+
+        if not summary:
+            return jsonify({'error': 'Failed to generate summary from the extracted text'}), 400
         
         current_date = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
         
@@ -719,9 +722,19 @@ def create_summary():
             "favorite": False
         }
         
+        # Debug: Print the note data before saving
+        print(f"DEBUG: About to save note:")
+        print(f"  Header: {title}")
+        print(f"  Sum length: {len(summary) if summary else 0}")
+        print(f"  Sum content (first 100 chars): {summary[:100] if summary else 'None'}...")
+        
         # Save to MongoDB
         result = note_collection.insert_one(note)
         note['_id'] = str(result.inserted_id)
+        
+        # Debug: Verify what was actually saved
+        saved_note = note_collection.find_one({'_id': result.inserted_id})
+        print(f"DEBUG: Saved note Sum length: {len(saved_note.get('Sum', '')) if saved_note and saved_note.get('Sum') else 0}")
         
         return jsonify({"message": "Summary created successfully!", "summary": mongo_to_json(note)})
     except Exception as e:
@@ -748,7 +761,10 @@ def create_text_summary():
         system_prompt = "Extract key concepts, important details, and actionable insights from the provided text."
         structure_output = "Provide ONLY the summary content as bullet points using markdown format. Do not include any introductory text or phrases. Start directly with the first bullet point. Organize by topic or importance for easy scanning."
         response = model.generate_content(f"{system_prompt} {structure_output} {text}")
-        summary = response.text
+        summary = response.text.strip() if response.text else ""
+        
+        if not summary:
+            return jsonify({'error': 'Failed to generate summary from the provided text'}), 400
         
         current_date = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
         

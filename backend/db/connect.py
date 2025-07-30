@@ -5,6 +5,12 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
+# Debug: Check if environment variables are loaded
+print(f"DEBUG: MONGODB_USER loaded: {'Yes' if os.getenv('MONGODB_USER') else 'No'}")
+print(f"DEBUG: MONGODB_PASSWORD loaded: {'Yes' if os.getenv('MONGODB_PASSWORD') else 'No'}")
+print(f"DEBUG: GENAI_API_KEY loaded: {'Yes' if os.getenv('GENAI_API_KEY') else 'No'}")
+print(f"DEBUG: SECRET_KEY loaded: {'Yes' if os.getenv('SECRET_KEY') else 'No'}")
+
 uri = f"mongodb+srv://{os.getenv('MONGODB_USER')}:{os.getenv('MONGODB_PASSWORD')}@cluster0.qcym40v.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
 client = MongoClient(uri, server_api=ServerApi('1'))
 
