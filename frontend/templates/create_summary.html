@@ -15,6 +15,12 @@
             <input type="file" id="fileInput" class="file-input" accept=".pdf,image/*" multiple>
         </div>
         <div class="file-list" id="fileList"></div>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="spinner"></div>
+            <p id="loadingMessage">Processing...</p>
+        </div>
         
         <div class="form-actions">
             <button type="button" class="btn-secondary" onclick="window.location.href='/create-text-summary'">Use Text Input Instead</button>
@@ -82,6 +88,16 @@
             return;
         }
 
+        const submitBtn = document.querySelector('#create-summary-form button[type="submit"]');
+
+        // Show loading overlay and disable button
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const loadingMessage = document.getElementById('loadingMessage');
+        
+        loadingMessage.textContent = 'Uploading files...';
+        loadingOverlay.style.display = 'flex';
+        submitBtn.disabled = true;
+
         const formData = new FormData();
         formData.append('title', title);
         for (const file of files) {
@@ -89,6 +105,9 @@
         }
 
         try {
+            // Update loading message for OCR processing
+            loadingMessage.textContent = 'Extracting text with OCR...';
+
             const token = localStorage.getItem('token');
             const response = await fetch('/api/create-summary', {
                 method: 'POST',
@@ -99,19 +118,70 @@
             });
 
             if (response.ok) {
+                loadingMessage.textContent = 'Creating summary...';
                 alert('Summary created successfully!');
                 window.location.href = '/dashboard';
             } else {
-                alert('Failed to create summary.');
+                const errorData = await response.json();
+                alert(`Failed to create summary: ${errorData.error || 'Unknown error'}`);
             }
         } catch (error) {
             console.error('Error creating summary:', error);
-            alert('Error creating summary.');
+            alert('Error creating summary. Please check the console for details.');
+        } finally {
+            // Hide loading overlay and re-enable button
+            loadingOverlay.style.display = 'none';
+            submitBtn.disabled = false;
         }
     });
 </script>
 
 <style>
+/* Form Container Styles */
+.form-container {
+    position: relative; /* Important for absolute positioning of loading overlay */
+}
+
+/* Loading Overlay Styles */
+.loading-overlay {
+    display: none; /* Hidden by default - THIS IS THE KEY FIX */
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.9);
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    z-index: 1000;
+    border-radius: 12px;
+    backdrop-filter: blur(2px);
+}
+
+.spinner {
+    border: 4px solid var(--surface-color);
+    border-top: 4px solid var(--primary-color);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 15px;
+}
+
+#loadingMessage {
+    color: var(--text-color);
+    font-size: 1rem;
+    font-weight: 500;
+    text-align: center;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Form Action Styles */
 .form-actions {
     display: flex;
     gap: 12px;
@@ -132,6 +202,12 @@
 
 .btn-secondary:hover {
     background: var(--hover-color);
+}
+
+/* Disabled button state */
+.btn-primary:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }
 </style>
 {% endblock %}
