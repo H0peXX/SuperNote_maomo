@@ -590,8 +590,12 @@ def create_summary():
                 return jsonify({'error': 'Only PDF, PNG, JPG, JPEG files are supported.'}), 400
             
             try:
+                # For PDFs, always use fallback OCR
+                if file.filename.lower().endswith('.pdf'):
+                    use_typhoon_ocr = False
+                
                 if use_typhoon_ocr:
-                    # Use Typhoon OCR for better accuracy
+                    # Use Typhoon OCR for better accuracy on images
                     extracted_text = typhoon_ocr_service.process_uploaded_file(
                         file, file.filename, task_type="default"
                     )
@@ -599,7 +603,7 @@ def create_summary():
                 else:
                     # Fallback to existing OCR method for PDFs only
                     if not file.filename.lower().endswith('.pdf'):
-                        return jsonify({'error': 'Typhoon OCR unavailable. Only PDF files supported with fallback OCR.'}), 400
+                        return jsonify({'error': 'Typhoon OCR is not configured. Image files require Typhoon OCR. Please configure TYPHOON_API_KEY or use PDF files.'}), 400
                     
                     # Save uploaded file temporarily
                     with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:

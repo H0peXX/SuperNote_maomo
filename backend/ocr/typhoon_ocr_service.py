@@ -11,14 +11,28 @@ import json
 import tempfile
 from io import BytesIO
 from PIL import Image
-from openai import OpenAI
-from PyPDF2 import PdfReader
 from dotenv import load_dotenv
 
-# Load typhoon_ocr utilities
-from .typhoon_ocr.ocr_utils import render_pdf_to_base64png, get_anchor_text
-
 load_dotenv()
+
+# Try to import dependencies, handle gracefully if not available
+try:
+    from openai import OpenAI
+    OPENAI_AVAILABLE = True
+except ImportError:
+    OPENAI_AVAILABLE = False
+    print("Warning: openai package not available")
+
+try:
+    from PyPDF2 import PdfReader
+    PYPDF2_AVAILABLE = True
+except ImportError:
+    try:
+        from pypdf import PdfReader
+        PYPDF2_AVAILABLE = True
+    except ImportError:
+        PYPDF2_AVAILABLE = False
+        print("Warning: PDF processing not available")
 
 class TyphoonOCRService:
     def __init__(self):
@@ -81,58 +95,9 @@ class TyphoonOCRService:
 
     def process_pdf_file(self, file_path, task_type="default"):
         """Process PDF file with Typhoon OCR"""
-        if not self.is_available():
-            raise Exception("Typhoon OCR service is not available")
-        
-        try:
-            reader = PdfReader(file_path)
-            num_pages = len(reader.pages)
-            all_text = ""
-
-            for page_num in range(num_pages):
-                print(f"📄 Processing PDF page {page_num + 1}/{num_pages}")
-
-                # Render PDF page to base64 image
-                img_b64 = render_pdf_to_base64png(file_path, page_num)
-                
-                # Get anchor text for better OCR
-                anchor_text = get_anchor_text(file_path, page_num + 1, "pdfreport", 8000)
-                
-                # Get prompt
-                prompt = self.get_prompt(task_type)(anchor_text)
-
-                # Call Typhoon OCR API
-                response = self.client.chat.completions.create(
-                    model="typhoon-ocr-preview",
-                    messages=[{
-                        "role": "user",
-                        "content": [
-                            {"type": "text", "text": prompt},
-                            {"type": "image_url", "image_url": {"url": f"data:image/png;base64,{img_b64}"}},
-                        ],
-                    }],
-                    max_tokens=self.max_tokens,
-                    temperature=self.temperature,
-                    top_p=self.top_p,
-                    extra_body={"repetition_penalty": self.repetition_penalty},
-                )
-
-                output_text = response.choices[0].message.content
-                
-                # Try to parse JSON response
-                try:
-                    parsed_response = json.loads(output_text)
-                    if 'natural_text' in parsed_response:
-                        all_text += parsed_response['natural_text'] + "\n"
-                    else:
-                        all_text += output_text + "\n"
-                except json.JSONDecodeError:
-                    all_text += output_text + "\n"
-
-            return all_text.strip()
-
-        except Exception as e:
-            raise Exception(f"Error processing PDF: {str(e)}")
+        # For now, disable PDF processing for Typhoon OCR due to dependency issues
+        # Fall back to Tesseract OCR for PDFs
+        raise Exception("Typhoon OCR PDF processing temporarily disabled. Please use fallback OCR.")
 
     def process_image_file(self, file_path, task_type="default"):
         """Process image file with Typhoon OCR"""
