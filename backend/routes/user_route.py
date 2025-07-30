@@ -701,6 +701,21 @@ def toggle_note_favorite(note_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
+# --- Delete supernote by ID ---
+@super_note_bp.route('/api/supernote/<supernote_id>/delete', methods=['DELETE'])
+@cross_origin()
+def delete_supernote(supernote_id):
+    try:
+        result = super_note_collection.delete_one({'_id': ObjectId(supernote_id)})
+        if result.deleted_count == 1:
+            return jsonify({'success': True})
+        else:
+            return jsonify({'success': False, 'error': 'Supernote not found'}), 404
+    except Exception as e:
+        return jsonify({'success': False, 'error': str(e)}), 500
+
+
+
 # --- Toggle favorite status for supernote ---
 @super_note_bp.route('/api/supernote/<supernote_id>/favorite', methods=['POST'])
 @cross_origin()
