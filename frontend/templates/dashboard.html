@@ -64,23 +64,23 @@
                 supernotes = supernotesData.supernotes || [];
             }
             
-            // Combine and format all summaries
+            // Combine and format all summaries with null safety
             allSummaries = [
                 ...notes.map(note => ({
-                    id: note._id,
-                    title: note.Header,
-                    content: note.Sum,
-                    provider: note.Provider,
-                    date: note.DateTime,
+                    id: note._id || 'unknown',
+                    title: note.Header || 'Untitled Note',
+                    content: note.Sum || 'No content available',
+                    provider: note.Provider || 'Unknown',
+                    date: note.DateTime || new Date().toLocaleDateString(),
                     type: 'note',
                     favorite: note.favorite || false
                 })),
                 ...supernotes.map(supernote => ({
-                    id: supernote._id,
-                    title: supernote.Header,
-                    content: supernote.Sum,
-                    provider: supernote.Provider,
-                    date: supernote.DateTime,
+                    id: supernote._id || 'unknown',
+                    title: supernote.Header || 'Untitled Super Note',
+                    content: supernote.Sum || 'No content available',
+                    provider: supernote.Provider || 'Unknown',
+                    date: supernote.DateTime || new Date().toLocaleDateString(),
                     type: 'supernote',
                     favorite: supernote.favorite || false
                 }))
@@ -369,11 +369,15 @@
     }
     
     function truncateText(text, maxLength) {
+        if (!text || text === null || text === undefined) return 'No content available';
+        if (typeof text !== 'string') text = String(text);
         if (text.length <= maxLength) return text;
         return text.substr(0, maxLength) + '...';
     }
     
     function escapeHtml(text) {
+        if (!text || text === null || text === undefined) return '';
+        if (typeof text !== 'string') text = String(text);
         const div = document.createElement('div');
         div.textContent = text;
         return div.innerHTML;
