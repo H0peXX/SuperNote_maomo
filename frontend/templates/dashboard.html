@@ -21,7 +21,7 @@
 {{ super() }}
 <script>
     let allSummaries = [];
-    let currentFilter = 'recent';
+    let currentFilter = 'recent-notes';
     
     // Load summaries on page load
     document.addEventListener('DOMContentLoaded', function() {
@@ -105,15 +105,6 @@
         
         // Apply filter
         switch (currentFilter) {
-            case 'recent':
-                filteredSummaries.sort((a, b) => parseCustomDate(b.date) - parseCustomDate(a.date));
-                break;
-            case 'oldest':
-                filteredSummaries.sort((a, b) => parseCustomDate(a.date) - parseCustomDate(b.date));
-                break;
-            case 'favorites':
-                filteredSummaries = filteredSummaries.filter(s => s.favorite);
-                break;
             case 'recent-notes':
                 filteredSummaries = filteredSummaries.filter(s => s.type === 'note');
                 filteredSummaries.sort((a, b) => parseCustomDate(b.date) - parseCustomDate(a.date));
@@ -306,31 +297,22 @@
         const titleElement = document.querySelector('.dynamic-title');
         if (!titleElement) return;
         
-        let newTitle = 'CNN';
+        let newTitle = 'Notes';
         switch (filter) {
-            case 'recent':
-                newTitle = 'All Recent Summaries';
-                break;
-            case 'oldest':
-                newTitle = 'All Oldest Summaries';
-                break;
-            case 'favorites':
-                newTitle = 'All Favorite Summaries';
-                break;
             case 'recent-notes':
-                newTitle = 'Recent Notes';
+                newTitle = 'Notes';
                 break;
             case 'favorite-notes':
                 newTitle = 'Favorite Notes';
                 break;
             case 'recent-supernotes':
-                newTitle = 'Recent Super Notes';
+                newTitle = 'Super Notes';
                 break;
             case 'favorite-supernotes':
                 newTitle = 'Favorite Super Notes';
                 break;
             default:
-                newTitle = 'CNN';
+                newTitle = 'Notes';
         }
         
         titleElement.textContent = newTitle;
