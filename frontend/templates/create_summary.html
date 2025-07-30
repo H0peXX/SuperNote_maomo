@@ -22,9 +22,32 @@
             <p id="loadingMessage">Processing...</p>
         </div>
         
-        <div class="form-actions">
+        <!-- Review Section (Hidden by default) -->
+        <div class="review-section" id="reviewSection">
+            <h3>Review and Edit Your Content</h3>
+            
+            <div class="review-content">
+                <div class="extracted-text-section">
+                    <label for="extractedText">Extracted Text (OCR Result):</label>
+                    <textarea id="extractedText" class="review-textarea" placeholder="Extracted text will appear here..."></textarea>
+                </div>
+                
+                <div class="summary-section">
+                    <label for="generatedSummary">Generated Summary:</label>
+                    <textarea id="generatedSummary" class="review-textarea" placeholder="AI-generated summary will appear here..."></textarea>
+                </div>
+            </div>
+            
+            <div class="review-actions">
+                <button type="button" class="btn-secondary" id="regenerateSummaryBtn">Regenerate Summary</button>
+                <button type="button" class="btn-secondary" id="backToUploadBtn">Back to Upload</button>
+                <button type="button" class="btn-primary" id="saveNoteBtn">Save Note</button>
+            </div>
+        </div>
+        
+        <div class="form-actions" id="initialFormActions">
             <button type="button" class="btn-secondary" onclick="window.location.href='/create-text-summary'">Use Text Input Instead</button>
-            <button type="submit" class="btn-primary">Create Summary</button>
+            <button type="submit" class="btn-primary">Extract Text</button>
         </div>
     </form>
 </div>
@@ -109,7 +132,7 @@
             loadingMessage.textContent = 'Extracting text with OCR...';
 
             const token = localStorage.getItem('token');
-            const response = await fetch('/api/create-summary', {
+            const response = await fetch('/api/extract-and-summarize', {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
@@ -119,19 +142,118 @@
 
             if (response.ok) {
                 loadingMessage.textContent = 'Creating summary...';
-                alert('Summary created successfully!');
-                window.location.href = '/dashboard';
+                const result = await response.json();
+                const extractedText = result.extracted_text || '';
+                const summary = result.summary || '';
+                
+                // Show review section
+                document.getElementById('initialFormActions').style.display = 'none';
+                document.getElementById('reviewSection').style.display = 'block';
+                document.getElementById('extractedText').value = extractedText;
+                document.getElementById('generatedSummary').value = summary;
             } else {
                 const errorData = await response.json();
-                alert(`Failed to create summary: ${errorData.error || 'Unknown error'}`);
+                alert(`Failed to extract text: ${errorData.error || 'Unknown error'}`);
             }
         } catch (error) {
-            console.error('Error creating summary:', error);
-            alert('Error creating summary. Please check the console for details.');
+            console.error('Error extracting text:', error);
+            alert('Error extracting text. Please check the console for details.');
         } finally {
             // Hide loading overlay and re-enable button
             loadingOverlay.style.display = 'none';
             submitBtn.disabled = false;
+        }
+    });
+
+    document.getElementById('regenerateSummaryBtn').addEventListener('click', async () => {
+        const extractedText = document.getElementById('extractedText').value;
+        if (!extractedText.trim()) {
+            alert('Extracted text cannot be empty.');
+            return;
+        }
+
+        // Show loading overlay
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const loadingMessage = document.getElementById('loadingMessage');
+        loadingMessage.textContent = 'Regenerating summary...';
+        loadingOverlay.style.display = 'flex';
+
+        try {
+            // Call API to regenerate summary
+            const token = localStorage.getItem('token');
+            const response = await fetch('/api/summarize', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ text: extractedText })
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                document.getElementById('generatedSummary').value = result.summary;
+            } else {
+                alert('Failed to regenerate summary.');
+            }
+        } catch (error) {
+            console.error('Error regenerating summary:', error);
+            alert('Error regenerating summary.');
+        } finally {
+            loadingOverlay.style.display = 'none';
+        }
+    });
+
+    document.getElementById('backToUploadBtn').addEventListener('click', () => {
+        document.getElementById('reviewSection').style.display = 'none';
+        document.getElementById('initialFormActions').style.display = 'flex';
+        fileInput.value = ''; // Clear file input
+        fileList.innerHTML = ''; // Clear file list
+    });
+
+    document.getElementById('saveNoteBtn').addEventListener('click', async () => {
+        const title = document.getElementById('title').value.trim();
+        const summary = document.getElementById('generatedSummary').value.trim();
+        const provider = localStorage.getItem('username') || 'Unknown';
+
+        if (!title || !summary) {
+            alert('Title and summary cannot be empty.');
+            return;
+        }
+
+        // Show loading overlay
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const loadingMessage = document.getElementById('loadingMessage');
+        loadingMessage.textContent = 'Saving note...';
+        loadingOverlay.style.display = 'flex';
+
+        try {
+            const token = localStorage.getItem('token');
+            const response = await fetch('/save', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    header: title,
+                    topic: 'General', // You can customize topic selection later
+                    sum: summary,
+                    provider: provider
+                })
+            });
+
+            if (response.ok) {
+                alert('Note saved successfully!');
+                window.location.href = '/dashboard';
+            } else {
+                alert('Failed to save note.');
+            }
+        } catch (error) {
+            console.error('Error saving note:', error);
+            alert('Error saving note.');
+        } finally {
+            loadingOverlay.style.display = 'none';
         }
     });
 </script>
@@ -208,6 +330,83 @@
 .btn-primary:disabled {
     opacity: 0.6;
     cursor: not-allowed;
+}
+
+/* Review Section Styles */
+.review-section {
+    display: none;
+    margin-top: 30px;
+    padding: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    background: var(--surface-color);
+}
+
+.review-section h3 {
+    margin: 0 0 20px 0;
+    color: var(--text-color);
+    font-size: 1.2rem;
+}
+
+.review-content {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.extracted-text-section,
+.summary-section {
+    display: flex;
+    flex-direction: column;
+}
+
+.extracted-text-section label,
+.summary-section label {
+    font-weight: 600;
+    margin-bottom: 8px;
+    color: var(--text-color);
+}
+
+.review-textarea {
+    width: 100%;
+    min-height: 200px;
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 14px;
+    line-height: 1.5;
+    resize: vertical;
+    background: var(--background-color);
+    color: var(--text-color);
+}
+
+.review-textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(var(--primary-color-rgb), 0.1);
+}
+
+.review-actions {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+}
+
+/* Responsive design for review section */
+@media (max-width: 768px) {
+    .review-content {
+        grid-template-columns: 1fr;
+    }
+    
+    .review-actions {
+        flex-direction: column;
+    }
+    
+    .review-actions button {
+        width: 100%;
+    }
 }
 </style>
 {% endblock %}
