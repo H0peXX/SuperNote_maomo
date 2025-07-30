@@ -14,3 +14,8 @@ opencv-python
 Pillow
 PyPDF2
 pdf2image
+
+# Typhoon OCR Dependencies
+pypdf==5.8.0
+openai==1.97.0
+ftfy==6.3.1

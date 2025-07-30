@@ -556,8 +556,6 @@ def update_supernote(supernote_id):
 @cross_origin()
 def create_summary():
     try:
-        # For now, we'll create a simple text-based summary
-        # In the future, this could handle file uploads and process them
         title = request.form.get('title')
         files = request.files.getlist('files')
         
@@ -569,34 +567,59 @@ def create_summary():
         if not username:
             return jsonify({'error': 'Authentication required'}), 401
             
-# Process uploaded PDF files
-        full_text = ""
-        
         if not files:
             return jsonify({'error': 'No files uploaded'}), 400
         
+        # Process uploaded files with Typhoon OCR
+        full_text = ""
+        
+        # Import Typhoon OCR service
+        try:
+            from ocr.typhoon_ocr_service import typhoon_ocr_service
+            use_typhoon_ocr = typhoon_ocr_service.is_available()
+            if not use_typhoon_ocr:
+                print("Typhoon OCR service not properly configured, falling back to Tesseract")
+        except (ImportError, ValueError) as e:
+            print(f"Typhoon OCR not available, falling back to Tesseract: {e}")
+            use_typhoon_ocr = False
+        
         for file in files:
-            if not file.filename.endswith('.pdf'):
-                return jsonify({'error': 'Only PDF files are supported for OCR.'}), 400
-            
-            # Save uploaded file temporarily
-            with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
-                file.save(temp_file.name)
-                temp_path = temp_file.name
+            # Check file extension
+            allowed_extensions = ['.pdf', '.png', '.jpg', '.jpeg']
+            if not any(file.filename.lower().endswith(ext) for ext in allowed_extensions):
+                return jsonify({'error': 'Only PDF, PNG, JPG, JPEG files are supported.'}), 400
             
             try:
-                # Convert PDF pages to images
-                pages = convert_from_path(temp_path, 500, poppler_path=r'C:\poppler\poppler-24.08.0\Library\bin')
-                for page in pages:
-                    # Perform OCR on each image
-                    text = pytesseract.image_to_string(page)
-                    full_text += text + "\n"
+                if use_typhoon_ocr:
+                    # Use Typhoon OCR for better accuracy
+                    extracted_text = typhoon_ocr_service.process_uploaded_file(
+                        file, file.filename, task_type="default"
+                    )
+                    full_text += extracted_text + "\n"
+                else:
+                    # Fallback to existing OCR method for PDFs only
+                    if not file.filename.lower().endswith('.pdf'):
+                        return jsonify({'error': 'Typhoon OCR unavailable. Only PDF files supported with fallback OCR.'}), 400
+                    
+                    # Save uploaded file temporarily
+                    with tempfile.NamedTemporaryFile(delete=False, suffix='.pdf') as temp_file:
+                        file.save(temp_file.name)
+                        temp_path = temp_file.name
+                    
+                    try:
+                        # Convert PDF pages to images
+                        pages = convert_from_path(temp_path, 500, poppler_path=r'C:\poppler\poppler-24.08.0\Library\bin')
+                        for page in pages:
+                            # Perform OCR on each image
+                            text = pytesseract.image_to_string(page)
+                            full_text += text + "\n"
+                    finally:
+                        # Clean up temporary file
+                        if os.path.exists(temp_path):
+                            os.unlink(temp_path)
+                            
             except Exception as ocr_error:
-                return jsonify({'error': f'Error processing PDF: {str(ocr_error)}'}), 500
-            finally:
-                # Clean up temporary file
-                if os.path.exists(temp_path):
-                    os.unlink(temp_path)
+                return jsonify({'error': f'Error processing file {file.filename}: {str(ocr_error)}'}), 500
         
         if not full_text.strip():
             return jsonify({'error': 'No text could be extracted from the PDF files'}), 400
