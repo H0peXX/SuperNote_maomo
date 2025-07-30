@@ -294,6 +294,22 @@ body {
     text-align: center;
 }
 
+/* Nav Section Styles */
+.nav-section {
+    margin-top: 16px;
+}
+
+.nav-section-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text-light);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 0 20px 8px 20px;
+    border-bottom: 1px solid var(--border-color);
+    margin-bottom: 8px;
+}
+
 .sidebar-footer {
     padding: 0 20px;
 }

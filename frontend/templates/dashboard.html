@@ -100,6 +100,9 @@
         
         let filteredSummaries = [...allSummaries];
         
+        // Update page title based on current filter
+        updatePageTitle(currentFilter);
+        
         // Apply filter
         switch (currentFilter) {
             case 'recent':
@@ -110,6 +113,14 @@
                 break;
             case 'favorites':
                 filteredSummaries = filteredSummaries.filter(s => s.favorite);
+                break;
+            case 'recent-notes':
+                filteredSummaries = filteredSummaries.filter(s => s.type === 'note');
+                filteredSummaries.sort((a, b) => parseCustomDate(b.date) - parseCustomDate(a.date));
+                break;
+            case 'favorite-notes':
+                filteredSummaries = filteredSummaries.filter(s => s.type === 'note' && s.favorite);
+                filteredSummaries.sort((a, b) => parseCustomDate(b.date) - parseCustomDate(a.date));
                 break;
             case 'recent-supernotes':
                 filteredSummaries = filteredSummaries.filter(s => s.type === 'supernote');
@@ -278,8 +289,8 @@
                 let dropdownFilter = filter;
                 if (filter === 'favorite') {
                     dropdownFilter = 'favorites';
-                } else if (filter === 'recent-supernotes' || filter === 'favorite-supernotes') {
-                    // For super notes filters, keep the specific filter
+                } else if (filter.includes('supernotes') || filter.includes('notes')) {
+                    // For specific notes/supernotes filters, keep the filter as is
                     dropdownFilter = filter;
                 }
                 
@@ -289,6 +300,41 @@
             }
         });
     });
+    
+    // Update page title based on current filter
+    function updatePageTitle(filter) {
+        const titleElement = document.querySelector('.dynamic-title');
+        if (!titleElement) return;
+        
+        let newTitle = 'CNN';
+        switch (filter) {
+            case 'recent':
+                newTitle = 'All Recent Summaries';
+                break;
+            case 'oldest':
+                newTitle = 'All Oldest Summaries';
+                break;
+            case 'favorites':
+                newTitle = 'All Favorite Summaries';
+                break;
+            case 'recent-notes':
+                newTitle = 'Recent Notes';
+                break;
+            case 'favorite-notes':
+                newTitle = 'Favorite Notes';
+                break;
+            case 'recent-supernotes':
+                newTitle = 'Recent Super Notes';
+                break;
+            case 'favorite-supernotes':
+                newTitle = 'Favorite Super Notes';
+                break;
+            default:
+                newTitle = 'CNN';
+        }
+        
+        titleElement.textContent = newTitle;
+    }
     
     // Utility functions
     function parseCustomDate(dateString) {
