@@ -11,6 +11,24 @@
             position: relative;
         }
         
+        .user-section .dropdown {
+            position: relative;
+        }
+        
+        .user-section .dropdown-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--surface-color, #fff);
+            border: 1px solid var(--border-color, #ddd);
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            display: none;
+            z-index: 1000;
+            margin-top: 8px;
+        }
+        
         .btn-summary.dropdown-toggle {
             display: flex;
             align-items: center;
@@ -84,6 +102,12 @@
                             <span id="currentUser">Mick,Ink</span>
                             <i class="fas fa-chevron-down"></i>
                         </button>
+                        <div class="dropdown-menu" id="userMenu">
+                            <a href="javascript:void(0);" class="dropdown-item" onclick="logout()">
+                                <i class="fas fa-sign-out-alt"></i>
+                                Logout
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -201,6 +225,24 @@
             localStorage.removeItem('token');
             localStorage.removeItem('username');
             window.location.href = '/login';
+        }
+        
+        // User dropdown functionality
+        const userDropdown = document.getElementById('userDropdown');
+        const userMenu = document.getElementById('userMenu');
+        
+        if (userDropdown && userMenu) {
+            userDropdown.addEventListener('click', function(e) {
+                e.preventDefault();
+                userMenu.classList.toggle('show');
+            });
+            
+            // Close dropdown when clicking outside
+            document.addEventListener('click', function(e) {
+                if (!userDropdown.contains(e.target)) {
+                    userMenu.classList.remove('show');
+                }
+            });
         }
         
         // Summary dropdown functionality
