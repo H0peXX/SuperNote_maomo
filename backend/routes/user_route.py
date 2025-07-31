@@ -352,6 +352,18 @@ def save():
         provider = data.get('provider')
         current_date = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
         
+        # Debug logging
+        print(f"DEBUG /save: Received data:")
+        print(f"  header: {header}")
+        print(f"  topic: {topic}")
+        print(f"  summary length: {len(summary) if summary else 0}")
+        print(f"  summary content (first 100 chars): {summary[:100] if summary else 'None'}...")
+        print(f"  provider: {provider}")
+        
+        # Validate required fields
+        if not header or not summary:
+            return jsonify({'error': 'Header and summary are required'}), 400
+        
         # Create document
         note = {
             "Header": header,
@@ -363,11 +375,19 @@ def save():
             "favorite": False
         }
         
+        print(f"DEBUG /save: About to save note with Sum field: {repr(note['Sum'])}")
+        
         # Save to MongoDB
-        note_collection.insert_one(note)
+        result = note_collection.insert_one(note)
+        
+        # Verify what was actually saved
+        saved_note = note_collection.find_one({'_id': result.inserted_id})
+        print(f"DEBUG /save: Saved note Sum field: {repr(saved_note.get('Sum') if saved_note else 'NOT FOUND')}")
+        
         # Return only success message
         return jsonify({"message": "Summary saved successfully!"})
     except Exception as e:
+        print(f"DEBUG /save: Exception occurred: {str(e)}")
         return jsonify({"error": f"Error saving to database: {str(e)}"}), 500
     
 
@@ -413,17 +433,41 @@ def make_supernote():
         notes = data.get('notes', [])
         if not notes or not isinstance(notes, list):
             return jsonify({'error': 'No notes provided'}), 400
-        # Combine all Sum fields
-        combined_sum = ' '.join([n.get('Sum', '') for n in notes])
-        combined_header = ', '.join([n.get('Header', '') for n in notes])
+        
+        # Combine all Sum fields with null safety
+        combined_sum = ' '.join([n.get('Sum', '') for n in notes if n.get('Sum')])
+        combined_header = ', '.join([n.get('Header', '') for n in notes if n.get('Header')])
         combined_topic = notes[0].get('Topic', '') if notes else ''
-        combined_provider = ', '.join([n.get('Provider', '') for n in notes])
+        combined_provider = ', '.join([n.get('Provider', '') for n in notes if n.get('Provider')])
+        
+        # Debug logging
+        print(f"DEBUG: Combined sum length: {len(combined_sum)}")
+        print(f"DEBUG: Combined sum content: {combined_sum[:100]}..." if len(combined_sum) > 100 else f"DEBUG: Combined sum content: {combined_sum}")
+        
+        # Check if we have content to summarize
+        if not combined_sum.strip():
+            return jsonify({'error': 'No content available to create super note. Selected notes appear to be empty.'}), 400
+        
         # Summarize and correct with Gemini
         system_prompt = "Combine and synthesize the provided texts into a consolidated knowledge summary."
         structure_output = "Provide ONLY the summary content as organized bullet points using markdown format. Do not include introductory phrases or explanations. Start directly with the content. Use clear categories and prioritize key information for review."
         prompt = f"{system_prompt} {structure_output}'{combined_topic}': {combined_sum}"
+        
+        print(f"DEBUG: Sending prompt to Gemini (length: {len(prompt)})")
         response = model.generate_content(prompt)
-        supernote_sum = response.text
+        
+        # Check if response is valid
+        if not response or not hasattr(response, 'text') or not response.text:
+            print("DEBUG: Gemini response is empty or invalid")
+            return jsonify({'error': 'Failed to generate summary from AI service'}), 500
+        
+        supernote_sum = response.text.strip()
+        print(f"DEBUG: Generated supernote sum length: {len(supernote_sum)}")
+        
+        # Ensure we have a valid summary
+        if not supernote_sum:
+            supernote_sum = "Summary could not be generated."
+        
         current_date = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
         supernote_doc = {
             "Header": combined_header,
@@ -434,12 +478,17 @@ def make_supernote():
             "LastUpdate": current_date,
             "favorite": False
         }
+        
+        # Debug: Print what we're about to save
+        print(f"DEBUG: Saving supernote with Sum field: {repr(supernote_doc['Sum'])}")
+        
         # Insert and get inserted_id
         result = super_note_collection.insert_one(supernote_doc)
         # Do not return ObjectId in response (not JSON serializable)
         supernote_doc["_id"] = str(result.inserted_id)
         return jsonify({"supernote": mongo_to_json(supernote_doc)})
     except Exception as e:
+        print(f"DEBUG: Exception in make_supernote: {str(e)}")
         return jsonify({"error": str(e)}), 500
     
 
@@ -627,14 +676,28 @@ def extract_and_summarize():
 @cross_origin()
 def save_from_ocr():
     try:
+        # Get username from auth token
+        username = get_username_from_token(request)
+        if not username:
+            return jsonify({'error': 'Authentication required'}), 401
+            
         data = request.get_json()
+        print(f"DEBUG: Received data in save_from_ocr: {data}")
+        
         title = data.get('title')
         extracted_text = data.get('extracted_text')
         header = data.get('header')
         topic = data.get('topic')
-        provider = data.get('provider')
+        provider = data.get('provider', username)  # Use username if provider not provided
         current_date = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
         summary = data.get('summary')
+        
+        print(f"DEBUG: Parsed values:")
+        print(f"  title: {title}")
+        print(f"  header: {header}")
+        print(f"  topic: {topic}")
+        print(f"  summary: {summary[:100] if summary else 'None'}...")
+        print(f"  extracted_text length: {len(extracted_text) if extracted_text else 0}")
 
         if not title or not extracted_text or not summary:
             return jsonify({'error': 'Title, extracted text, and summary are required'}), 400

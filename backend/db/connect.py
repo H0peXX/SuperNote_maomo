@@ -3,7 +3,7 @@ from pymongo.server_api import ServerApi
 import os
 from dotenv import load_dotenv
 
-load_dotenv()
+load_dotenv('../.env')  # Load from parent directory
 
 # Debug: Check if environment variables are loaded
 print(f"DEBUG: MONGODB_USER loaded: {'Yes' if os.getenv('MONGODB_USER') else 'No'}")

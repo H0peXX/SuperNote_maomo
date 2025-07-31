@@ -331,10 +331,66 @@
     }
 
     // Save Super Note (it's already saved, just show success)
-    function saveSuperNote() {
-        alert('Super Note created successfully!');
-        window.location.href = '/dashboard';
+async function saveSuperNote() {
+    try {
+        const defaultTopic = selectedNotes[0]?.Topic || 'General';
+        const supernoteTopic = prompt(`Enter a topic for your SuperNote (default: ${defaultTopic}):`, defaultTopic);
+        
+        if (supernoteTopic === null) {
+            return; // User cancelled
+        }
+        
+        if (!supernoteTopic.trim()) {
+            alert('Please enter a valid topic for your SuperNote.');
+            return;
+        }
+        
+        const title = currentSuperNote?.Header || 'Untitled';
+        const summary = currentSuperNote?.Sum || '';
+        const extracted_text = selectedNotes.map(note => note.Sum).join(' ');
+        const provider = localStorage.getItem('username') || 'user';
+
+        console.log('Saving SuperNote with data:', {
+            title,
+            extracted_text: extracted_text.substring(0, 100) + '...',
+            header: title,
+            topic: supernoteTopic.trim(),
+            provider,
+            summary: summary.substring(0, 100) + '...'
+        });
+
+        const token = localStorage.getItem('token');
+        const response = await fetch('/api/save-from-ocr', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+                title: title,
+                extracted_text: extracted_text,
+                header: title,
+                topic: supernoteTopic.trim(),
+                provider: provider,
+                summary: summary,
+            })
+        });
+
+        if (response.ok) {
+            const result = await response.json();
+            console.log('Save successful:', result);
+            alert('Super Note saved successfully!');
+            window.location.href = '/dashboard';
+        } else {
+            const errorData = await response.json();
+            console.error('Save failed:', errorData);
+            throw new Error(errorData.error || 'Failed to save Super Note');
+        }
+    } catch (error) {
+        console.error('Error saving super note:', error);
+        alert(`Failed to save Super Note: ${error.message}`);
     }
+}
 
     // Navigation between steps
     function showStep(stepNumber) {
