@@ -92,11 +92,11 @@
                 <!-- Notes Section -->
                 <div class="nav-section">
                     <h4 class="nav-section-title">Notes</h4>
-                    <a href="#" class="nav-item active" data-filter="recent-notes">
+                    <a href="javascript:void(0);" class="nav-item active" data-filter="recent-notes">
                         <i class="fas fa-clock"></i>
                         <span>Recent</span>
                     </a>
-                    <a href="#" class="nav-item" data-filter="favorite-notes">
+                    <a href="javascript:void(0);" class="nav-item" data-filter="favorite-notes">
                         <i class="fas fa-star"></i>
                         <span>Favorite</span>
                     </a>
@@ -105,11 +105,11 @@
                 <!-- Super Notes Section -->
                 <div class="nav-section">
                     <h4 class="nav-section-title">Super Notes</h4>
-                    <a href="#" class="nav-item" data-filter="recent-supernotes">
+                    <a href="javascript:void(0);" class="nav-item" data-filter="recent-supernotes">
                         <i class="fas fa-clock"></i>
                         <span>Recent</span>
                     </a>
-                    <a href="#" class="nav-item" data-filter="favorite-supernotes">
+                    <a href="javascript:void(0);" class="nav-item" data-filter="favorite-supernotes">
                         <i class="fas fa-star"></i>
                         <span>Favorite</span>
                     </a>
@@ -220,6 +220,21 @@
                 }
             });
         }
+        
+        // Global navigation handling for sidebar nav items
+        document.querySelectorAll('.nav-item').forEach(item => {
+            item.addEventListener('click', function(e) {
+                const filter = this.dataset.filter;
+                if (filter) {
+                    // If we're not on dashboard, navigate to dashboard
+                    if (window.location.pathname !== '/dashboard') {
+                        e.preventDefault();
+                        window.location.href = '/dashboard';
+                    }
+                    // If on dashboard, let dashboard.html handle the filtering
+                }
+            });
+        });
     </script>
     {% endblock %}
 </body>

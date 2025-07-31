@@ -12,8 +12,14 @@
     </div>
     
     <form id="edit-summary-form" class="edit-form" style="display: none;">
-        <input type="text" id="title" class="title-input" placeholder="Summary Title" required>
-        <textarea id="content" class="content-textarea" placeholder="Summary content..." required></textarea>
+        <div class="form-group">
+            <label for="title">Summary Title</label>
+            <input type="text" id="title" class="title-input" placeholder="Enter title here..." required>
+        </div>
+        <div class="form-group">
+            <label for="content">Summary Content</label>
+            <textarea id="content" class="content-textarea" placeholder="Enter summary content here..." required></textarea>
+        </div>
         <button type="submit" class="btn-save">Save Changes</button>
     </form>
     
@@ -25,6 +31,166 @@
     </div>
 </div>
 {% endblock %}
+
+<style>
+/* Edit Page Specific Styles */
+.form-container {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.edit-form {
+    background: var(--surface-color, #fff);
+    border-radius: 12px;
+    padding: 30px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.form-group {
+    margin-bottom: 24px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--text-color, #333);
+    font-size: 14px;
+}
+
+.title-input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid var(--border-color, #e1e5e9);
+    border-radius: 8px;
+    font-size: 16px;
+    background: var(--background-color, #fff);
+    color: var(--text-color, #333);
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.title-input:focus {
+    outline: none;
+    border-color: var(--primary-color, #007bff);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.content-textarea {
+    width: 100%;
+    min-height: 300px;
+    padding: 16px;
+    border: 2px solid var(--border-color, #e1e5e9);
+    border-radius: 8px;
+    font-size: 14px;
+    line-height: 1.6;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--background-color, #fff);
+    color: var(--text-color, #333);
+    resize: vertical;
+    transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.content-textarea:focus {
+    outline: none;
+    border-color: var(--primary-color, #007bff);
+    box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+}
+
+.btn-save {
+    background: var(--primary-color, #007bff);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.btn-save:hover {
+    background: var(--primary-color-dark, #0056b3);
+    transform: translateY(-1px);
+}
+
+.btn-save:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 60px 20px;
+    color: var(--text-light, #666);
+}
+
+.spinner {
+    width: 32px;
+    height: 32px;
+    border: 3px solid var(--border-color, #e1e5e9);
+    border-top: 3px solid var(--primary-color, #007bff);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 16px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.status-message {
+    text-align: center;
+    padding: 40px 20px;
+    border-radius: 8px;
+}
+
+.status-message.error {
+    background: #f8d7da;
+    color: #721c24;
+    border: 1px solid #f5c6cb;
+}
+
+.btn-primary {
+    background: var(--primary-color, #007bff);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 6px;
+    cursor: pointer;
+    text-decoration: none;
+    display: inline-block;
+    margin-top: 16px;
+    transition: background-color 0.2s;
+}
+
+.btn-primary:hover {
+    background: var(--primary-color-dark, #0056b3);
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+    .form-container {
+        padding: 16px;
+    }
+    
+    .edit-form {
+        padding: 20px;
+    }
+    
+    .content-textarea {
+        min-height: 250px;
+    }
+}
+</style>
 
 {% block scripts %}
 {{ super() }}

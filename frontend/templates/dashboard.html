@@ -264,30 +264,39 @@
         renderSummaries();
     });
     
-    // Sidebar navigation
+    // Sidebar navigation - only handle filtering on dashboard page
     document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', function(e) {
-            e.preventDefault();
-            
-            // Update active state
-            document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
-            this.classList.add('active');
-            
-            // Update filter based on clicked item
-            const filter = this.dataset.filter;
-            if (filter) {
-                // Map sidebar filters to dropdown filters
-                let dropdownFilter = filter;
-                if (filter === 'favorite') {
-                    dropdownFilter = 'favorites';
-                } else if (filter.includes('supernotes') || filter.includes('notes')) {
-                    // For specific notes/supernotes filters, keep the filter as is
-                    dropdownFilter = filter;
-                }
+            // Only prevent default and handle filtering if we're on the dashboard page
+            if (window.location.pathname === '/dashboard') {
+                e.preventDefault();
                 
-                currentFilter = dropdownFilter;
-                document.getElementById('filterSelect').value = dropdownFilter;
-                renderSummaries();
+                // Update active state
+                document.querySelectorAll('.nav-item').forEach(nav => nav.classList.remove('active'));
+                this.classList.add('active');
+                
+                // Update filter based on clicked item
+                const filter = this.dataset.filter;
+                if (filter) {
+                    // Map sidebar filters to dropdown filters
+                    let dropdownFilter = filter;
+                    if (filter === 'favorite') {
+                        dropdownFilter = 'favorites';
+                    } else if (filter.includes('supernotes') || filter.includes('notes')) {
+                        // For specific notes/supernotes filters, keep the filter as is
+                        dropdownFilter = filter;
+                    }
+                    
+                    currentFilter = dropdownFilter;
+                    document.getElementById('filterSelect').value = dropdownFilter;
+                    renderSummaries();
+                }
+            } else {
+                // On other pages, navigate to dashboard with the filter
+                const filter = this.dataset.filter;
+                if (filter) {
+                    window.location.href = '/dashboard';
+                }
             }
         });
     });
