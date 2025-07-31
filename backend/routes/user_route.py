@@ -623,6 +623,43 @@ def extract_and_summarize():
     except Exception as e:
         return jsonify({'error': f'Error extracting text and summarizing: {str(e)}'}), 500
 
+@note_bp.route('/api/save-from-ocr', methods=['POST'])
+@cross_origin()
+def save_from_ocr():
+    try:
+        data = request.get_json()
+        title = data.get('title')
+        extracted_text = data.get('extracted_text')
+        header = data.get('header')
+        topic = data.get('topic')
+        provider = data.get('provider')
+        current_date = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+        summary = data.get('summary')
+
+        if not title or not extracted_text or not summary:
+            return jsonify({'error': 'Title, extracted text, and summary are required'}), 400
+
+        current_date = datetime.now().strftime('%d/%m/%Y %H:%M:%S')
+
+        note = {
+            "Header": header,
+            "Topic": topic,
+            "Sum": summary,
+            "Provider": provider,
+            "DateTime": current_date,
+            "LastUpdate": current_date,
+            "favorite": False,
+           
+        }
+
+        result = note_collection.insert_one(note)
+        note['_id'] = str(result.inserted_id)
+
+        return jsonify({"message": "Note created successfully!", "note": mongo_to_json(note)})
+    except Exception as e:
+        return jsonify({"error": f"Error saving note: {str(e)}"}), 500
+
+
 # --- Create summary from file upload ---
 @note_bp.route('/api/create-summary', methods=['POST'])
 @cross_origin()
@@ -893,8 +930,5 @@ def mongo_to_json(doc):
     if '_id' in doc:
         doc['_id'] = str(doc['_id'])
     return doc
-
-
-
 
 
