@@ -498,7 +498,18 @@ def make_supernote():
 @cross_origin()
 def get_notes():
     try:
-        notes = list(note_collection.find({}))
+        # Only fetch necessary fields for better performance
+        projection = {
+            '_id': 1,
+            'Header': 1,
+            'Sum': 1,
+            'Provider': 1,
+            'DateTime': 1,
+            'Topic': 1,
+            'favorite': 1
+        }
+        # Sort by DateTime descending for better performance (most recent first)
+        notes = list(note_collection.find({}, projection).sort('DateTime', -1))
         return jsonify({"notes": mongo_to_json(notes)})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -558,7 +569,18 @@ def delete_note(note_id):
 @cross_origin()
 def get_supernotes():
     try:
-        supernotes = list(super_note_collection.find({}))
+        # Only fetch necessary fields for better performance
+        projection = {
+            '_id': 1,
+            'Header': 1,
+            'Sum': 1,
+            'Provider': 1,
+            'DateTime': 1,
+            'Topic': 1,
+            'favorite': 1
+        }
+        # Sort by DateTime descending for better performance (most recent first)
+        supernotes = list(super_note_collection.find({}, projection).sort('DateTime', -1))
         return jsonify({"supernotes": mongo_to_json(supernotes)})
     except Exception as e:
         return jsonify({"error": str(e)}), 500

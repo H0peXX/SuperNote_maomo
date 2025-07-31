@@ -175,7 +175,8 @@ body {
     font-weight: 500;
     cursor: pointer;
     transition: all 0.2s ease;
-    margin-bottom: 20px;
+    margin: 0 auto 20px auto;
+    width: 100%;
 }
 
 .btn-google:hover {
